@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPiceZ-Core — Open-Source Racing Framework for FiveM</title>
+  <meta name="description" content="SPiceZ-Core is a modular, open-source, racing-only framework for FiveM. One-click txAdmin deploy, server-authoritative race engine, physics simulation, progression and more.">
+  <link rel="icon" href="Assets/Logo/logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=2">
+  <link rel="stylesheet" href="css/home.css?v=2">
+</head>
+<body class="home">
+
+  <nav class="nav">
+    <a class="nav-logo" href="#top"><img src="Assets/Logo/logo.png" alt="SPiceZ-Core"></a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#mission">Mission</a>
+      <a href="docs.html">Docs</a>
+      <a class="nav-gh" href="https://github.com/SPiceZ21" target="_blank" rel="noopener">
+        <i data-lucide="github" style="width:16px;height:16px"></i>
+        GitHub
+      </a>
+    </div>
+  </nav>
+
+  <!-- ── Hero ─────────────────────────────────────────────── -->
+  <header class="hero" id="top">
+    <video class="hero-video" id="heroVideo" autoplay muted loop playsinline></video>
+    <div class="hero-shade"></div>
+
+    <p class="hero-eyebrow reveal d1">OPEN SOURCE · GPL v3 · FIVEM</p>
+    <h1 class="reveal d1">A racing core.<br><em>Nothing else.</em></h1>
+    <p class="hero-sub reveal d2">
+      SPiceZ-Core is a modular, open-source FiveM framework built purely for
+      competitive street racing — no jobs, no housing, no bloat. Deploy a full
+      racing server with one txAdmin recipe.
+    </p>
+    <div class="hero-cta reveal d3">
+      <a class="btn btn-primary" href="docs.html#/installation">Get Started</a>
+      <a class="btn btn-ghost" href="https://github.com/SPiceZ21" target="_blank" rel="noopener">View on GitHub</a>
+    </div>
+    <div class="hero-strip reveal d4">
+      <div class="strip-item"><span class="strip-num">25+</span><span class="strip-label">Modules</span></div>
+      <div class="strip-item"><span class="strip-num">56</span><span class="strip-label">Tracks</span></div>
+      <div class="strip-item"><span class="strip-num">1</span><span class="strip-label">Click deploy</span></div>
+      <div class="strip-item"><span class="strip-num">0</span><span class="strip-label">Bloat</span></div>
+    </div>
+  </header>
+
+  <!-- ── Scrub Reveal ───────────────────────────────────────── -->
+  <section class="section scrub-section">
+    <div class="scrub-container">
+      <p class="scrub-text" id="scrubText">
+        <span>Built</span> <span>by</span> <span>the</span> <span class="hi">racer,</span>
+        <span>for</span> <span>the</span> <span class="hi">racer,</span> <span>and</span>
+        <span>to</span> <span>the</span> <span class="hi">racer.</span><br><br>
+        <span>SPiceZ-Core</span> <span>redefines</span> <span>the</span> <span>street</span>
+        <span>racing</span> <span>experience</span> <span>with</span> <span>absolute</span>
+        <span>precision.</span> <span>No</span> <span>compromises.</span> <span>No</span>
+        <span>bloat.</span> <span>Just</span> <span>the</span> <span>race.</span>
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Features ─────────────────────────────────────────── -->
+  <section class="section" id="features">
+    <p class="section-eyebrow reveal">WHAT'S INSIDE</p>
+    <h2 class="reveal">Everything a racing server needs</h2>
+    <div class="feature-grid">
+      <div class="feature reveal">
+        <div class="feature-icon"><i data-lucide="layers"></i></div>
+        <h3>Module-first architecture</h3>
+        <p>Every feature is its own resource with its own repository. Enable, disable, or replace any module independently — they talk only through events and exports.</p>
+      </div>
+      <div class="feature reveal">
+        <div class="feature-icon"><i data-lucide="shield-check"></i></div>
+        <h3>Server-authoritative race engine</h3>
+        <p>Queue, track vote, warmup, staging, 3-2-1 countdown, checkpoints, sector timing, finish windows and results — all measured and decided on the server. Clients never decide outcomes.</p>
+      </div>
+      <div class="feature reveal">
+        <div class="feature-icon"><i data-lucide="rocket"></i></div>
+        <h3>One-click txAdmin deploy</h3>
+        <p>The recipe installs every dependency and module, writes a production server.cfg, and the database schema applies itself on first boot via tracked migrations.</p>
+      </div>
+      <div class="feature reveal">
+        <div class="feature-icon"><i data-lucide="gauge"></i></div>
+        <h3>Powertrain simulation</h3>
+        <p>spz-physics replaces GTA's arcade throttle with torque curves, gear ratios, clutch simulation, rev limiters and engine braking — a CHASER-style driving feel.</p>
+      </div>
+      <div class="feature reveal">
+        <div class="feature-icon"><i data-lucide="trending-up"></i></div>
+        <h3>Real progression</h3>
+        <p>XP, driver ranks, safety rating and iRating modelled after sim racing. License tiers gate car classes — earn your way into faster machinery.</p>
+      </div>
+      <div class="feature reveal">
+        <div class="feature-icon"><i data-lucide="route"></i></div>
+        <h3>Racing-line trainer</h3>
+        <p>Every race and time-trial lap is captured automatically. Your best line paints onto the road — green where you were on throttle, red where you braked.</p>
+      </div>
+      <div class="feature reveal">
+        <div class="feature-icon"><i data-lucide="flag"></i></div>
+        <h3>F1-style identity</h3>
+        <p>Pick a nation and a unique race number at character creation. Both follow you everywhere — nametags, live standings, leaderboards.</p>
+      </div>
+      <div class="feature reveal">
+        <div class="feature-icon"><i data-lucide="timer"></i></div>
+        <h3>Time trials &amp; records</h3>
+        <p>Solo time trials in isolated routing buckets, per-track sector bests, speed-camera records, and a leaderboard covering standings, classes and history.</p>
+      </div>
+      <div class="feature reveal">
+        <div class="feature-icon"><i data-lucide="monitor"></i></div>
+        <h3>Purpose-built UI</h3>
+        <p>Race overlay with 3D checkpoint markers and sector strip, minimal nameplates, compact speed-cam HUD, cinematic spawn — all Preact + Vite, all consistent.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Mission / Vision ─────────────────────────────────── -->
+  <section class="section-mission" id="mission">
+    <video class="mv-video" src="Assets/bg/bg-2.webm" autoplay muted loop playsinline></video>
+    
+    <svg width="0" height="0" style="position:absolute; width:0; height:0;">
+      <defs>
+        <clipPath id="triangles-clip" clipPathUnits="objectBoundingBox">
+          <!-- Left side fractured hexagon cluster (8 triangles) -->
+          <polygon points="0.12,0.48  0.07,0.21  0.17,0.21" />
+          <polygon points="0.125,0.49  0.175,0.22  0.225,0.49" />
+          <polygon points="0.125,0.51  0.225,0.51  0.175,0.78" />
+          <polygon points="0.12,0.52  0.17,0.79  0.07,0.79" />
+          <polygon points="0.115,0.51  0.065,0.78  0.015,0.51" />
+          <polygon points="0.115,0.49  0.015,0.49  0.065,0.22" />
+          <polygon points="0.181,0.21  0.23,0.48  0.279,0.21" />
+          <polygon points="0.236,0.49  0.285,0.22  0.334,0.49" />
+          
+          <!-- Right side fractured hexagon cluster (8 triangles) -->
+          <polygon points="0.88,0.48  0.83,0.21  0.93,0.21" />
+          <polygon points="0.885,0.49  0.935,0.22  0.985,0.49" />
+          <polygon points="0.885,0.51  0.985,0.51  0.935,0.78" />
+          <polygon points="0.88,0.52  0.93,0.79  0.83,0.79" />
+          <polygon points="0.875,0.51  0.825,0.78  0.775,0.51" />
+          <polygon points="0.875,0.49  0.775,0.49  0.825,0.22" />
+          <polygon points="0.819,0.21  0.77,0.48  0.721,0.21" />
+          <polygon points="0.764,0.49  0.715,0.22  0.666,0.49" />
+        </clipPath>
+      </defs>
+    </svg>
+
+    <div class="mv-center reveal">
+      <h2>MISSION & VISION</h2>
+      <p class="mv-lead">Racing servers shouldn't be hard to build.</p>
+      <p class="mv-desc">
+        Most FiveM frameworks are general-purpose RP cores with racing bolted on. SPiceZ-Core inverts that: <strong>racing is the whole point</strong>. A free, open framework that anyone can deploy in minutes. Seasonal competition, community-built track packs, and a racing ecosystem where <strong>no server owner ever has to start from scratch again</strong>.
+      </p>
+      <div class="mv-cta">
+        <a class="btn btn-primary" href="docs.html#/installation">Start Building</a>
+        <a class="btn btn-ghost" href="https://github.com/SPiceZ21" target="_blank" rel="noopener">Read More</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Developer ────────────────────────────────────────── -->
+  <section class="section" id="dev">
+    <p class="section-eyebrow reveal">DEVELOPER &amp; OWNER</p>
+    <h2 class="reveal">Built by SPiceZ21</h2>
+    <a class="dev-card reveal d1" href="https://github.com/SPiceZ21" target="_blank" rel="noopener">
+      <img class="dev-avatar" src="https://github.com/SPiceZ21.png?size=160" alt="SPiceZ21 avatar">
+      <div class="dev-info">
+        <span class="dev-name">SPiceZ21</span>
+        <span class="dev-role">Developer &amp; Owner — SPiceZ-Core</span>
+        <span class="dev-link">github.com/SPiceZ21 →</span>
+      </div>
+    </a>
+  </section>
+
+  <!-- ── CTA ──────────────────────────────────────────────── -->
+  <section class="section cta-section">
+    <div class="cta-box reveal">
+      <h2>Start your racing server today</h2>
+      <p>One recipe URL in txAdmin. Everything else is automatic.</p>
+      <div class="cta-buttons">
+        <a class="btn btn-primary" href="docs.html#/installation">Read the Docs</a>
+        <a class="btn btn-ghost" href="https://github.com/SPiceZ21/spz-txrecipe" target="_blank" rel="noopener">Get the Recipe</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <img src="Assets/Logo/logo.png" alt="SPiceZ-Core Logo" class="footer-logo">
+      <span class="footer-copy">&copy; 2026 SPiceZ-Core</span>
+      <div class="footer-links">
+        <a href="docs.html">Docs</a>
+        <a href="https://github.com/SPiceZ21" target="_blank" rel="noopener">GitHub</a>
+        <a href="#">Discord</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  <script src="js/main.js?v=2"></script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+/* ── Homepage-only layer ─────────────────────────────────────
+   Panchang display font (local TTFs) + video hero + icon styling.
+   docs.html does NOT link this file — the font ships only here. */
+
+@font-face {
+  font-family: 'Panchang';
+  src: url('../Assets/Font/Panchang-Extrabold.ttf') format('truetype');
+  font-weight: 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Panchang';
+  src: url('../Assets/Font/Panchang-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Panchang';
+  src: url('../Assets/Font/Panchang-Semibold.ttf') format('truetype');
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Panchang';
+  src: url('../Assets/Font/Panchang-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+/* Panchang everywhere a display font appears on home */
+body.home h1,
+body.home h2,
+body.home .btn,
+body.home .strip-num,
+body.home .nav-logo,
+body.home .dev-name {
+  font-family: 'Panchang', 'Space Grotesk', sans-serif;
+}
+body.home h1 { letter-spacing: -0.02em; text-transform: uppercase; }
+body.home .hero h1 { font-weight: 800; }
+body.home h2 { letter-spacing: 0; }
+
+/* ── Video hero ────────────────────────────────────────────── */
+.hero { isolation: isolate; }
+.hero-video {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(1.05) contrast(1.02);
+}
+.hero-shade {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg,
+      rgba(10, 10, 12, 0.82) 0%,
+      rgba(10, 10, 12, 0.55) 40%,
+      rgba(10, 10, 12, 0.72) 78%,
+      var(--bg) 100%),
+    radial-gradient(ellipse at 50% 30%, rgba(255, 98, 0, 0.10), transparent 65%);
+}
+.hero-logo {
+  height: 80px;
+  width: auto;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 10px 40px rgba(255, 98, 0, 0.35));
+  animation: logoFloat 6s ease-in-out infinite;
+}
+@keyframes logoFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+}
+
+/* hero text gets stronger shadows over video */
+body.home .hero h1 { text-shadow: 0 4px 30px rgba(0, 0, 0, 0.6); }
+body.home .hero-sub { text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7); color: #c9c9d2; }
+
+/* ── Lucide feature icons ──────────────────────────────────── */
+.feature-icon svg {
+  width: 20px;
+  height: 20px;
+  color: var(--accent);
+  stroke-width: 2;
+}
+
+/* footer logo */
+.footer-brand { display: inline-flex; align-items: center; gap: 10px; }
+.footer-brand img { height: 20px; opacity: 0.75; }
+
+@media (max-width: 640px) {
+  .hero-logo { height: 60px; }
+}
