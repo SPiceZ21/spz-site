@@ -266,7 +266,6 @@ First-time players go through: **creation form** (alias, model base, nation, rac
 | --- | --- |
 | GetProfile(source) | Full cached profile (id, stats, crew, …) |
 | UpdateProfile(source, key, value) | Mutate + mark dirty for batch save |
-| GetUsername(source) | Display name |
 | IsFirstTime(source) | Needs character creation? |
 
 ## Crews
@@ -293,7 +292,6 @@ Thin persistence layer over the standalone **fivem-appearance** character editor
 
 | Export | Side | Purpose |
 | --- | --- | --- |
-| GetOutfitForPlayer(source) | server | Resolved outfit + source ("crew"/"personal") |
 `,
     },
 
@@ -474,8 +472,6 @@ Fixed camera positions across the map flash you and record your speed.
 
 | Export | Purpose |
 | --- | --- |
-| GetCameraRecords(camId, limit) | Top speeds for one camera |
-| GetTopSpeed(camId) | Current global record |
 `,
     },
 
