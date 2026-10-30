@@ -22,6 +22,8 @@ function inline(s) {
 const slug = (s) => s.toLowerCase().replace(/<[^>]+>/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
 function codeBlock(lang, code) {
+  // Diagrams: rendered by mermaid after the page is drawn (see drawDiagrams).
+  if (lang === 'mermaid') return `<figure class="diagram"><pre class="mermaid">${esc(code)}</pre></figure>`
   return `<div class="code"><div class="code-bar"><span>${esc(lang || 'text')}</span>` +
     `<button class="copy" type="button">Copy</button></div><pre><code>${esc(code)}</code></pre></div>`
 }
@@ -96,6 +98,11 @@ function renderMd(md) {
       toc.push({ id, t, lvl: 2 }); out.push(`<h2 id="${id}"><a class="anchor" href="#" data-id="${id}">#</a>${t}</h2>`); i++; continue
     }
     if (/^---\s*$/.test(line)) { out.push('<hr>'); i++; continue }
+    const img = line.match(/^!\[([^\]]*)\]\(([^)]+)\)\s*$/)
+    if (img) {
+      out.push(`<figure class="shot"><img src="${img[2]}" alt="${esc(img[1])}" loading="lazy">${img[1] ? `<figcaption>${esc(img[1])}</figcaption>` : ''}</figure>`)
+      i++; continue
+    }
     if (line.trim() === '') { i++; continue }
 
     const buf = [line]
@@ -213,6 +220,8 @@ function render() {
   }, { rootMargin: '-80px 0px -70% 0px' })
   content.querySelectorAll('h2[id], h3[id]').forEach((h) => spy.observe(h))
 
+  drawDiagrams()
+
   content.style.animation = 'none'
   void content.offsetHeight
   content.style.animation = ''
@@ -222,7 +231,30 @@ function render() {
   sidebar.classList.remove('open')
 }
 
+// Mermaid is loaded with defer from docs.html; theme it to the site once.
+let mermaidReady = false
+function drawDiagrams() {
+  if (!window.mermaid || !content.querySelector('.mermaid')) return
+  if (!mermaidReady) {
+    window.mermaid.initialize({
+      startOnLoad: false, theme: 'base', securityLevel: 'strict',
+      fontFamily: 'Inter, sans-serif',
+      themeVariables: {
+        darkMode: true, background: '#0d0d11',
+        primaryColor: '#1a1a21', primaryTextColor: '#e8e8ec', primaryBorderColor: '#ff6200',
+        lineColor: '#9a9aa5', secondaryColor: '#121218', tertiaryColor: '#121218',
+        actorBkg: '#1a1a21', actorBorder: '#ff6200', actorTextColor: '#e8e8ec',
+        signalColor: '#c8c8d0', signalTextColor: '#e8e8ec', labelBoxBkgColor: '#1a1a21',
+        noteBkgColor: '#2a1608', noteTextColor: '#e8e8ec', noteBorderColor: '#ff6200',
+      },
+    })
+    mermaidReady = true
+  }
+  window.mermaid.run({ nodes: content.querySelectorAll('.mermaid') })
+}
+
 buildSidebar()
+window.addEventListener('load', () => drawDiagrams())
 render()
 window.addEventListener('hashchange', render)
 search.addEventListener('input', () => buildSidebar(search.value))

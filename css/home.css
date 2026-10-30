@@ -94,3 +94,42 @@ body.home .hero-sub { text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7); color: #c9c9d2
 @media (max-width: 640px) {
   .hero-logo { height: 60px; }
 }
+
+/* ── Creator card ─────────────────────────────────────────────
+   Big art panel on the left, a dark card overlapping it on the right. */
+.creator {
+  position: relative; display: flex; align-items: center;
+  max-width: 1180px; margin: 48px auto 0; padding: 0 24px; text-align: left;
+}
+.creator-art {
+  flex: 0 0 52%; aspect-ratio: 1 / 1; border-radius: 28px; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background:
+    radial-gradient(120% 90% at 30% 20%, rgba(255, 145, 66, 0.55), transparent 60%),
+    radial-gradient(90% 80% at 80% 90%, rgba(255, 98, 0, 0.45), transparent 65%),
+    linear-gradient(160deg, #2a1608 0%, #160b04 100%);
+  border: 1px solid var(--border-hi);
+}
+.creator-art { justify-content: flex-start; padding-left: 7%; }
+.creator-art img { width: 70%; height: auto; filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.45)); }
+.creator-card {
+  position: relative; z-index: 1; flex: 1; margin-left: -9%;
+  background: #141418; border: 1px solid var(--border); border-radius: 28px;
+  padding: clamp(28px, 3.4vw, 44px); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+}
+.creator-name { font-family: 'Panchang', var(--font-display); font-weight: 700; font-size: clamp(24px, 2.6vw, 32px); margin-bottom: 8px; }
+.creator-role { color: var(--text-mute); font-size: 15px; margin-bottom: 22px; }
+.creator-text { color: var(--text); opacity: .88; font-size: 16.5px; line-height: 1.75; margin-bottom: 30px; }
+.creator-links { display: flex; gap: 16px; flex-wrap: wrap; }
+.creator-links a {
+  width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center;
+  background: #e4e4e7; color: #18181b; transition: transform .2s, background .2s, color .2s;
+}
+.creator-links a:hover { background: var(--accent); color: #fff; transform: translateY(-3px); }
+.creator-links svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+@media (max-width: 860px) {
+  .creator { flex-direction: column; }
+  .creator-art { flex-basis: auto; width: 100%; max-width: 520px; }
+  .creator-card { margin: -64px 0 0; width: calc(100% - 24px); }
+}

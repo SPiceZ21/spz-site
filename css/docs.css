@@ -109,3 +109,15 @@
 .toc-link.active { color: var(--accent); border-left-color: var(--accent); }
 
 @media (max-width: 1180px) { .docs-toc { display: none; } }
+
+/* diagrams + screenshots */
+.diagram {
+  margin: 8px 0 22px; padding: 22px 16px; border: 1px solid var(--border); border-radius: 12px;
+  background: radial-gradient(120% 120% at 0% 0%, rgba(255, 98, 0, 0.06), transparent 55%), #0d0d11;
+  overflow-x: auto; text-align: center;
+}
+.diagram pre.mermaid { background: none; border: 0; padding: 0; margin: 0; color: var(--text-mute); font-size: 12px; }
+.diagram svg { max-width: 100%; height: auto; }
+.shot { margin: 8px 0 22px; }
+.shot img { width: 100%; border-radius: 12px; border: 1px solid var(--border); display: block; }
+.shot figcaption { margin-top: 8px; font-size: 12.5px; color: var(--text-mute); text-align: center; }
