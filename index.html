@@ -10,20 +10,17 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css?v=4">
-  <link rel="stylesheet" href="css/home.css?v=3">
+  <link rel="stylesheet" href="css/home.css?v=4">
 </head>
 <body class="home">
 
   <nav class="nav">
-    <a class="nav-logo" href="#top"><img src="Assets/Logo/logo.png" alt="SPiceZ-Core"></a>
+    <a class="nav-logo" href="#top"><img src="Assets/Logo/logo.png" alt="SPiceZ-Core"><span class="nav-beta">Beta</span></a>
     <div class="nav-links">
-      <a href="#features">Features</a>
-      <a href="#mission">Mission</a>
+      <a class="nav-opt" href="#features">Features</a>
+      <a class="nav-opt" href="#mission">Mission</a>
       <a href="docs.html">Docs</a>
-      <a class="nav-gh" href="https://github.com/SPiceZ21" target="_blank" rel="noopener">
-        <i data-lucide="github" style="width:16px;height:16px"></i>
-        GitHub
-      </a>
+      <a class="nav-gh" href="https://github.com/SPiceZ21" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg> GitHub</a>
     </div>
   </nav>
 
@@ -209,22 +206,70 @@
     </div>
   </section>
 
-  <footer class="footer">
-    <div class="footer-content">
-      <img src="Assets/Logo/logo.png" alt="SPiceZ-Core Logo" class="footer-logo">
-      <span class="footer-copy">&copy; 2026 SPiceZ-Core</span>
-      <div class="footer-links">
-        <a href="docs.html">Docs</a>
-        <a href="https://github.com/SPiceZ21" target="_blank" rel="noopener">GitHub</a>
-        <a href="#">Discord</a>
+  <footer class="site-footer">
+    <div class="sf-inner">
+      <div class="sf-top">
+        <div class="sf-brand">
+          <img src="Assets/Logo/logo.png" alt="SPiceZ-Core" class="sf-logo">
+          <p>An open-source, racing-only framework for FiveM. Server-side timing, fair ranks and a race loop that runs on its own.</p>
+          <a class="sf-cta" href="docs.html#/installation">Deploy with txAdmin →</a>
+        </div>
+        <nav class="sf-cols" aria-label="Footer">
+          <div><h3>Project</h3><ul>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#mission">Mission</a></li>
+            <li><a href="docs.html#/beta">Beta notes</a></li>
+            <li><a href="docs.html#/ui-gallery">UI gallery</a></li>
+          </ul></div>
+          <div><h3>Docs</h3><ul>
+            <li><a href="docs.html#/installation">Installation</a></li>
+            <li><a href="docs.html#/architecture">Architecture</a></li>
+            <li><a href="docs.html#/modules">Modules</a></li>
+            <li><a href="docs.html#/commands">Commands</a></li>
+          </ul></div>
+          <div><h3>Code</h3><ul>
+            <li><a href="https://github.com/SPiceZ21" target="_blank" rel="noopener">GitHub</a></li>
+            <li><a href="https://github.com/SPiceZ21/spz-txrecipe" target="_blank" rel="noopener">txAdmin recipe</a></li>
+            <li><a href="https://github.com/SPiceZ21/Docs" target="_blank" rel="noopener">Docs repo</a></li>
+          </ul></div>
+          <div><h3>Creator</h3><ul>
+            <li><a href="https://yugabharathi21.netlify.app" target="_blank" rel="noopener">Portfolio</a></li>
+            <li><a href="https://spicez21.netlify.app" target="_blank" rel="noopener">spicez21.netlify.app</a></li>
+            <li><a href="https://forum.cfx.re/u/SPiceZ21" target="_blank" rel="noopener">Cfx.re forum</a></li>
+          </ul></div>
+        </nav>
       </div>
+      <div class="sf-bottom">
+        <span>&copy; 2026 SPiceZ-Core</span>
+        <span class="sf-status"><i></i>Public beta</span>
+        <span>Built by SPiceZ21</span>
+      </div>
+    </div>
+    <!-- Glow pinned to the viewport bottom; rises over the last stretch of scroll (js/main.js). -->
+    <div class="sf-glow" aria-hidden="true">
+      <svg viewBox="0 0 1271 599" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="sfGrad" x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0" stop-color="#1a0802"/>
+            <stop offset="0.18" stop-color="#7a2400"/>
+            <stop offset="0.32" stop-color="#ff6200"/>
+            <stop offset="0.46" stop-color="#ffb07a"/>
+            <stop offset="0.6" stop-color="#ff9142"/>
+            <stop offset="0.74" stop-color="#ff4d1d"/>
+            <stop offset="0.86" stop-color="#c2185b"/>
+            <stop offset="1" stop-color="#ff620000"/>
+          </linearGradient>
+          <filter id="sfBlur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="30"/></filter>
+        </defs>
+        <g id="sfBars"></g>
+      </svg>
     </div>
   </footer>
 
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="https://unpkg.com/lucide@0.453.0/dist/umd/lucide.min.js"></script>
   <script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-  <script src="js/main.js?v=2"></script>
+  <script src="js/main.js?v=3"></script>
 </body>
 </html>

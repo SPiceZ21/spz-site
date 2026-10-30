@@ -74,3 +74,33 @@ if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
     });
   }
 }
+
+/* ── Footer glow ──────────────────────────────────────────────
+   Bell of blurred columns pinned to the viewport bottom. Its scaleY goes
+   from a thin strip to full height over the last glow-height of scroll. */
+;(() => {
+  const footer = document.querySelector('.site-footer')
+  const glow = footer && footer.querySelector('.sf-glow')
+  const bars = glow && glow.querySelector('#sfBars')
+  if (!glow || !bars) return
+
+  const VBW = 1271, VBH = 599, N = 9, PEAK = 0.98, VALLEY = 0.55, MIN = 0
+  const colW = VBW / N, mid = (N - 1) / 2
+  let svg = ''
+  for (let i = 0; i < N; i++) {
+    const t = Math.abs(i - mid) / mid
+    const h = PEAK * VBH * (VALLEY + (1 - VALLEY) * (1 - Math.pow(t, 1.24)))
+    svg += `<g filter="url(#sfBlur)"><rect x="${i * colW}" y="${VBH - h}" width="${colW * 1.23}" height="${h}" fill="url(#sfGrad)"/></g>`
+  }
+  bars.innerHTML = svg
+
+  const measure = () => {
+    const h = glow.offsetHeight || 1
+    const left = document.documentElement.scrollHeight - innerHeight - scrollY
+    const t = Math.max(0, Math.min(1, (h - left) / h))
+    glow.style.transform = `scaleY(${MIN + (1 - MIN) * t})`
+  }
+  measure()
+  addEventListener('scroll', measure, { passive: true })
+  addEventListener('resize', measure, { passive: true })
+})()

@@ -133,3 +133,63 @@ body.home .hero-sub { text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7); color: #c9c9d2
   .creator-art { flex-basis: auto; width: 100%; max-width: 520px; }
   .creator-card { margin: -64px 0 0; width: calc(100% - 24px); }
 }
+
+/* ── Navbar (home) ─────────────────────────────────────────── */
+.nav { background: rgba(10, 10, 12, 0.82); }
+.nav-logo { gap: 10px; }
+.nav-beta {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--accent); border: 1px solid var(--border-hi); border-radius: 999px; padding: 2px 8px;
+}
+.nav-gh svg { flex-shrink: 0; }
+@media (max-width: 600px) {
+  .nav { width: calc(100% - 24px); padding: 0 14px; top: 12px; }
+  .nav-opt, .nav-beta { display: none; }
+  .nav-logo img { height: 22px; }
+}
+
+/* ── Footer ────────────────────────────────────────────────────
+   Content first; under it, room for a blurred orange glow that is pinned
+   to the bottom of the viewport and rises as the page reaches its end. */
+.site-footer {
+  --glow-h: 42vh;
+  position: relative; padding-bottom: var(--glow-h);
+  border-top: 1px solid var(--border); background: var(--bg);
+  text-align: left;
+}
+.sf-inner { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 64px 24px 0; }
+.sf-top { display: grid; grid-template-columns: 1.3fr 3fr; gap: 48px; padding-bottom: 44px; }
+.sf-logo { height: 30px; width: auto; display: block; }
+.sf-brand p { margin-top: 18px; color: var(--text-dim); font-size: 14px; line-height: 1.7; max-width: 300px; }
+.sf-cta {
+  display: inline-block; margin-top: 20px; padding: 9px 16px; border-radius: 9px;
+  background: var(--accent); color: #fff; font: 600 13px var(--font-body);
+  box-shadow: 0 8px 24px rgba(255, 98, 0, 0.35); transition: transform .2s, box-shadow .2s;
+}
+.sf-cta:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(255, 98, 0, 0.45); }
+.sf-cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; }
+.sf-cols h3 {
+  font: 600 11px var(--font-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--text);
+}
+.sf-cols ul { list-style: none; margin-top: 16px; display: flex; flex-direction: column; gap: 11px; }
+.sf-cols a { color: var(--text-dim); font-size: 14px; transition: color .2s; }
+.sf-cols a:hover { color: var(--accent); }
+.sf-bottom {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+  border-top: 1px solid var(--border); padding: 22px 0 8px;
+  font: 500 11px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--text-mute);
+}
+.sf-status { display: inline-flex; align-items: center; gap: 8px; }
+.sf-status i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+
+.sf-glow {
+  position: fixed; left: 0; right: 0; bottom: 0; height: var(--glow-h, 42vh); z-index: 0;
+  pointer-events: none; transform-origin: bottom; transform: scaleY(0); will-change: transform;
+}
+.sf-glow svg { width: 100%; height: 100%; display: block; }
+
+@media (max-width: 860px) {
+  .sf-top { grid-template-columns: 1fr; }
+  .sf-cols { grid-template-columns: repeat(2, 1fr); }
+  .sf-bottom { justify-content: center; text-align: center; }
+}
