@@ -209,7 +209,13 @@ body.home .hero-sub { text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7); color: #c9c9d2
      up its warm light, and lose the studio-white contrast. */
   -webkit-mask-image: linear-gradient(to top, transparent 30%, rgba(0,0,0,.6) 46%, #000 66%);
           mask-image: linear-gradient(to top, transparent 30%, rgba(0,0,0,.6) 46%, #000 66%);
-  filter: brightness(.68) contrast(.86) sepia(.32) saturate(1.1)
-          drop-shadow(0 0 18px rgba(255, 98, 0, .55)) drop-shadow(0 -6px 40px rgba(255, 145, 66, .35));
+  filter: brightness(.68) contrast(.86) sepia(.32) saturate(1.1);
+}
+/* The light spill lives on a wrapper: a mask clips everything on its own
+   element to the image box, so a drop-shadow there showed as a square. Here it
+   follows the car's (already faded) shape. */
+.sf-car {
+  display: block;
+  filter: drop-shadow(0 0 18px rgba(255, 98, 0, .5)) drop-shadow(0 -6px 40px rgba(255, 145, 66, .3));
 }
 @media (max-width: 600px) { .sf-cars { gap: 0; } .sf-cars img { width: 34vw; } }
