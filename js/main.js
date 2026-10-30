@@ -114,7 +114,7 @@ if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
         // fanned on an arc: outer cars tilt outward and sit a little lower.
         const rot = (+img.dataset.rot || 0) * ease
         const drop = +img.dataset.drop || 0
-        img.style.transform = `translateY(${(1 - ease) * 110 + ease * (50 + drop)}%) rotate(${rot}deg)`
+        img.style.transform = `translateY(${(1 - ease) * 110 + ease * (36 + drop)}%) rotate(${rot}deg)`
       })
     }
   }
