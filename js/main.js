@@ -99,6 +99,9 @@ if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
     const left = document.documentElement.scrollHeight - innerHeight - scrollY
     const t = Math.max(0, Math.min(1, (h - left) / h))
     glow.style.transform = `scaleY(${MIN + (1 - MIN) * t})`
+    // A blurred shape scaled to 0 can still leave a hairline; hide it outright
+    // until the end of the page is actually in reach.
+    glow.style.visibility = t > 0.001 ? 'visible' : 'hidden'
   }
   measure()
   addEventListener('scroll', measure, { passive: true })
