@@ -1,711 +1,514 @@
-// All documentation content. `body` is a mini-markdown dialect rendered by
-// docs.js: ## h2, ### h3, - lists, | tables, ``` code fences, `inline`, **bold**.
+// GENERATED from the Docs repo (SPiceZ21/Docs) — do not edit by hand.
+// `body` is markdown rendered by docs.js.
 
 const DOCS = {
-  groups: [
-    {
-      title: 'Get Started',
-      pages: ['overview', 'installation', 'architecture', 'database'],
-    },
-    {
-      title: 'Core',
-      pages: ['spz-core', 'spz-identity', 'spz-appearance', 'spz-spawn'],
-    },
-    {
-      title: 'Racing',
-      pages: ['spz-races', 'spz-poll', 'spz-raceUI', 'spz-leaderboard', 'spz-progression', 'spz-speedcam', 'spz-raceline'],
-    },
-    {
-      title: 'Vehicles & Physics',
-      pages: ['spz-vehicles', 'spz-physics', 'spz-carspawner', 'spz-speedometer', 'spz-nos', 'spz-vehfunc'],
-    },
-    {
-      title: 'Interface',
-      pages: ['spz-nametag', 'spz-loading', 'spz-ui'],
-    },
-    {
-      title: 'Platform',
-      pages: ['spz-rpc', 'spz-fpscap', 'spz-log', 'spz-txrecipe'],
-    },
-    {
-      title: 'Reference',
-      pages: ['dependencies'],
-    },
-  ],
-
-  pages: {
-
-    /* ══ GET STARTED ═══════════════════════════════════════ */
-
-    'overview': {
-      title: 'What is SPiceZ-Core?',
-      tagline: 'A modular, open-source, racing-only framework for FiveM.',
-      badges: ['GPL v3', 'Lua 5.4', 'FiveM'],
-      body: `
-SPiceZ-Core (\`spz-*\`) is a FiveM framework built from the ground up for **competitive street racing**. It is not an RP framework with races bolted on — racing is the entire scope.
-
-## Design principles
-
-- **No bloat** — racing only. No jobs, housing, or crime systems.
-- **Module-first** — every feature is a standalone resource with its own repository. Enable, disable, or replace any of them.
-- **Event-driven** — modules communicate exclusively through events and exports; none reach into another's internals.
-- **Config-driven** — every tunable lives in a \`config.lua\`.
-- **Server-authoritative** — lap times, sector times, positions, results, and records are measured and decided on the server. Clients never decide race outcomes.
-
-## The stack
-
-| Layer | Technology |
-| --- | --- |
-| Runtime | FiveM / Cfx server |
-| Language | Lua 5.4 |
-| Database | MySQL / MariaDB via oxmysql |
-| Shared library | ox_lib |
-| NUI | Preact + Vite + TypeScript |
-| Isolation | FiveM routing buckets |
-
-## Developer
-
-SPiceZ-Core is developed and owned by **SPiceZ21** — [github.com/SPiceZ21](https://github.com/SPiceZ21). All repositories are licensed under GPL v3.
-`,
-    },
-
-    'installation': {
-      title: 'Installation',
-      tagline: 'One recipe URL in txAdmin. Everything else is automatic.',
-      badges: ['txAdmin', 'Recipe v3'],
-      body: `
-## txAdmin recipe (recommended)
-
-- Open your **txAdmin** dashboard → Server Setup → **Remote URL Template**.
-- Paste the recipe URL:
-
-\`\`\`
-https://raw.githubusercontent.com/SPiceZ21/spz-txrecipe/main/spz-recipe.yaml
-\`\`\`
-
-- Follow the wizard — server name, license key, database connection.
-- The recipe downloads every dependency (\`oxmysql\`, \`ox_lib\`, \`fivem-appearance\`, \`pma-voice\`) and every \`spz-*\` module, then writes a production-ready \`server.cfg\`.
-
-**There are no SQL files to import.** The database schema is owned by spz-core and applies itself on first boot — see [Database](#/database).
-
-## Requirements
-
-| Requirement | Notes |
-| --- | --- |
-| Server artifact | Build 27926 or higher |
-| MySQL / MariaDB | Any running instance (XAMPP works locally) |
-| FiveM license key | keymaster.fivem.net |
-
-## Manual install
-
-Ensure order matters. The full order is maintained in the recipe's \`server.cfg\`; the short version:
-
-\`\`\`cfg
-# Dependencies
-ensure oxmysql
-ensure ox_lib
-ensure fivem-appearance
-ensure pma-voice
-
-# Core (order matters)
-ensure spz-rpc
-ensure spz-loading
-ensure spz-core
-ensure spz-identity
-ensure spz-appearance
-ensure spz-spawn
-
-# Racing modules
-ensure spz-speedcam
-ensure spz-vehicles
-ensure spz-races
-ensure spz-progression
-ensure spz-nametag
-ensure spz-poll
-ensure spz-raceUI
-ensure spz-leaderboard
-ensure spz-carspawner
-ensure spz-physics
-ensure spz-fpscap
-ensure spz-raceline
-ensure spz-speedometer
-ensure spz-nos
-ensure spz-vehfunc
-
-ensure vMenu
-\`\`\`
-`,
-    },
-
-    'architecture': {
-      title: 'Architecture',
-      tagline: 'Small modules, strict boundaries, one authoritative server.',
-      badges: ['Statebags', 'Routing buckets'],
-      body: `
-## Module boundaries
-
-Every module is a separate FiveM resource with its own git repository. Cross-module communication happens only through:
-
-- **Events** — e.g. spz-races fires \`spz-raceline:lapCompleted\` with the server-measured lap time; spz-raceline decides whether to store the driven line.
-- **Exports** — e.g. \`exports["spz-identity"]:GetProfile(source)\`.
-- **Statebags** — identity publishes \`nation\`, \`raceNumber\`, \`rank\` etc. on player state; nametag and raceUI read them without ever calling identity.
-
-## Server authority
-
-The race engine (spz-races) runs a statebag-driven state machine: \`IDLE → WAITING → WARMUP → COUNTDOWN → LIVE → ENDED → CLEANUP\`. All timing — laps, sectors, finish order, records — is measured with server clocks. Clients report checkpoint hits; the server validates order and does the math. \`sv_stateBagStrictMode\` is enabled: clients cannot write replicated state.
-
-## World isolation
-
-Each race runs in its own **routing bucket** — racers can't be interfered with by freeroam traffic. Time trials get a private bucket per player. Cleanup returns everyone to bucket 0.
-
-## Race lifecycle timing
-
-| Phase | Default |
-| --- | --- |
-| Join window (armed by first E press) | 30s |
-| Track vote poll | 30s |
-| Warmup free-drive | 60s |
-| Grid settle + countdown | 3s + 3-2-1 |
-| Finish window after first finisher | 180s |
-| Results screen | 12s |
-| Intermission (overlapped with results) | 30s |
-`,
-    },
-
-    'database': {
-      title: 'Database & Migrations',
-      tagline: 'One schema owner. Zero manual SQL.',
-      badges: ['spz-core', 'oxmysql'],
-      body: `
-The entire schema is owned by **spz-core**. Every file in \`spz-core/migrations/\` is applied once, in order, on server boot, and recorded in the \`spz_migrations\` ledger table — restarts and upgrades are no-ops. No other resource creates or alters tables.
-
-\`SPZ:coreReady\` does not fire until migrations complete, so no module ever queries a half-built database. Modules that need an explicit gate can call \`exports["spz-core"]:WaitForMigrations()\`.
-
-## Adding schema
-
-Add a new numbered file to \`spz-core/migrations/\` and list it in \`server/migrations.lua\`. **Never edit a migration that has shipped.**
-
-## Tables
-
-| Table | Owner | Purpose |
-| --- | --- | --- |
-| players | spz-identity | Profiles, stats, ranks, nation, race number |
-| crews | spz-identity | Crew groups, tags, crew outfits |
-| driver_licenses | spz-progression | License unlock history |
-| vehicle_customizations | spz-vehicles | Saved per-vehicle cosmetic setups |
-| race_sessions | spz-races | Per-race metadata |
-| race_results | spz-races | Per-player results, lap times, SR/iRating changes |
-| track_records | spz-races | Personal bests per track and class |
-| track_sectors | spz-races | Best sector times per player/track/class |
-| racelines | spz-raceline | Best-lap driving lines |
-| speedcam_bests | spz-speedcam | Speed camera records |
-| economy_transactions | spz-core | Credits ledger |
-| player_outfits | spz-appearance | Saved outfits |
-| player_badges | spz-progression | Seasonal badges |
-`,
-    },
-
-    /* ══ CORE ══════════════════════════════════════════════ */
-
-    'spz-core': {
-      title: 'spz-core',
-      tagline: 'Framework bootstrap — sessions, state machine, routing buckets, migrations.',
-      badges: ['v2.0', 'Server + Client', 'Required'],
-      body: `
-The foundation every other module depends on. Boots the framework in a strict order: config → database ping → **migrations** → player sessions → state systems → \`SPZ:coreReady\`.
-
-## Responsibilities
-
-- **Database migrations** — single schema owner (see [Database](#/database)).
-- **Player sessions** — creation on connect, cleanup on drop, session cache.
-- **Routing bucket manager** — allocation and teardown of isolated race worlds.
-- **Event bus** — shared event name constants and emitter helpers.
-- **Permissions & middleware** — ACE-backed permission checks for admin actions.
-- **Client environment** — personal (client-side only) time and weather.
-
-## Commands
-
-| Command | Description |
-| --- | --- |
-| /weather | Personal weather picker (ox_lib dropdown, client-side only) |
-| /time | Personal time — presets (morning/evening/night) or exact H M |
-
-## Key exports
-
-| Export | Side | Purpose |
-| --- | --- | --- |
-| CreateSession(src, name, identifier) | server | Register a player session |
-| AssignPlayerToBucket(src, bucket) | server | Move player between worlds |
-| DeleteBucket(id) | server | Tear down a race bucket |
-| WaitForMigrations(timeoutMs) | server | Block until schema is ready |
-`,
-    },
-
-    'spz-identity': {
-      title: 'spz-identity',
-      tagline: 'Player profiles, licenses, crews, nation & race number.',
-      badges: ['Server-heavy', 'oxmysql'],
-      body: `
-Owns the \`players\` table at runtime: profile load on connect, in-memory cache with dirty-flag batch saves, and the character creation flow.
-
-## Character creation
-
-First-time players go through: **creation form** (alias, model base, nation, race number) → **fivem-appearance** dress-up → spawn menu. Validation is fully server-side:
-
-- Alias: 3–16 chars, alphanumeric + underscore, unique.
-- Nation: ISO 3166-1 alpha-2 — drives the flag on nametags and standings.
-- Race number: **1–99, unique across all racers** (F1 rules). Taken numbers are rejected with a clear error.
-
-## Statebags published
-
-\`username\`, \`gender\`, \`rank\`, \`sr\`, \`iRating\`, \`crewId\`, \`crewTag\`, \`licenseTier\`, \`nation\`, \`raceNumber\`, \`avatarUrl\`, \`identityReady\` — consumers read state, they never query identity directly.
-
-## Key exports
-
-| Export | Purpose |
-| --- | --- |
-| GetProfile(source) | Full cached profile (id, stats, crew, …) |
-| UpdateProfile(source, key, value) | Mutate + mark dirty for batch save |
-| IsFirstTime(source) | Needs character creation? |
-
-## Crews
-
-Crew create/join/leave with unique tags, owner transfer, and a crew-change cooldown. Crew tag renders on nametags and in race standings.
-`,
-    },
-
-    'spz-appearance': {
-      title: 'spz-appearance',
-      tagline: 'Outfit persistence and crew uniforms on top of fivem-appearance.',
-      badges: ['fivem-appearance', 'oxmysql'],
-      body: `
-Thin persistence layer over the standalone **fivem-appearance** character editor. No framework requirement — that's why fivem-appearance replaced illenium-appearance in the stack.
-
-## Behaviour
-
-- Saves each player's outfit to \`player_outfits\` (JSON) and re-applies it on spawn.
-- **Crew uniforms**: a crew can define a shared outfit (\`crews.crew_outfit\`); members wear it automatically, with priority crew outfit → personal outfit → whatever is worn.
-- Re-applies reactively when the player's crew changes (statebag change handler).
-- Uses \`setPedAppearance\` when the model is unchanged, so re-applying never re-swaps the ped model (which would break player control).
-
-## Key exports
-
-| Export | Side | Purpose |
-| --- | --- | --- |
-`,
-    },
-
-    'spz-spawn': {
-      title: 'spz-spawn',
-      tagline: 'Spawn menu, idle animation, cinematic camera, character creation UI.',
-      badges: ['NUI', 'Preact'],
-      body: `
-The front door of the server. Hosts the character-creation form for first-time players and the deployment-zone spawn menu for everyone else.
-
-## Features
-
-- **Cinematic spawn scene** — fixed preview location, idle animation, slow orbiting camera, evening light.
-- **Spawn carousel** — pick a deployment zone with arrow keys / on-screen nav, Enter to spawn.
-- **Character creation** — racer alias, model base, **nation picker with live flag preview**, and race number (1–99). Server errors (taken name/number) render inline without losing input.
-- Player card with avatar, crew tag, license class, and playtime from statebags.
-
-## Flow
-
-\`\`\`
-connect → identity loads profile
-  first time?  → creation form → fivem-appearance dress-up → spawn menu
-  returning?   → spawn menu → deploy
-\`\`\`
-`,
-    },
-
-    /* ══ RACING ════════════════════════════════════════════ */
-
-    'spz-races': {
-      title: 'spz-races',
-      tagline: 'The race engine — queue, poll, warmup, countdown, checkpoints, timing, time trials.',
-      badges: ['v1.9', 'Server-authoritative', '56 tracks'],
-      body: `
-The heart of the framework. Runs the full race lifecycle as a statebag-driven state machine with all timing measured server-side.
-
-## Race flow
-
-- **Queue** — press **E** at the lobby to join (and E again to leave). The first joiner arms a 30s join window; no minimum player count. Players who press E mid-race are enrolled into the next cycle automatically.
-- **Poll** — 30s track vote (via spz-poll), weighted track selection.
-- **World setup** — isolated routing bucket, grid spawn with ped pre-teleport (multiplayer-safe), spawn grace during warmup for slow loaders.
-- **Warmup** — 60s free-drive to scout the track or tune the car.
-- **Countdown** — TP back to grid frozen (freeze-before-TP kills jump starts), 3s silent settle, 3-2-1-GO.
-- **Live** — checkpoint validation, per-lap timing, **3-way sector timing**, live positions, idle-kick watchdog.
-- **Finish window** — the first finisher arms a 180s countdown; stragglers are warned at 60/30/10s and then DNF'd so the podium never waits.
-- **Mid-race reconnect** — a crash or timeout during a live race holds the grid slot for 60s; rejoining restores lap, checkpoint and race clock at the last crossed checkpoint. The window expiring falls through to a normal disconnect DNF.
-- **Incidents** — hard world impacts (sudden speed loss + body damage together) are detected client-side, validated server-side, shown on the post-race card, and feed the SR penalty and clean-race bonus.
-- **Results → intermission** — results screen (12s) overlapped with the 30s intermission countdown; next join window arms instantly.
-
-## Sectors
-
-Every track splits into 3 sectors by checkpoint count (derived, works for all tracks). Sector colours: **purple** = session best, **green** = personal best, **yellow** = slower. Bests persist per track/class in \`track_sectors\`.
-
-## Checkpoints
-
-Custom streamed gate props (start / finish / checkpoint arches) placed at the track's left/right gate positions. The next checkpoint renders as a 3D-projected pill in the race UI with live distance.
-
-## Time trials
-
-\`/timetrail\` opens an ox_lib track picker. Solo bucket, ghost-free hotlapping with lap/sector timing, sprint and circuit support, \`/quittt\` to exit. Sector PBs store under a separate TT class so any-car TT times never pollute class-scoped race bests.
-
-## Commands
-
-| Command | Description |
-| --- | --- |
-| /joinrace, /leaverace | Queue without the E prompt |
-| /timetrail | Time-trial track picker |
-| /quittt | Leave the current time trial |
-
-## Key events (for module authors)
-
-| Event | Fired when |
-| --- | --- |
-| spz-raceline:lapCompleted | Any race/TT lap completes (server, with lap ms) |
-| SPZ:sectorComplete | A sector closes (client, with time + colour) |
-| SPZ:raceEnd | Results broadcast to racers |
-`,
-    },
-
-    'spz-poll': {
-      title: 'spz-poll',
-      tagline: 'Track vote between race cycles.',
-      badges: ['NUI', 'Preact'],
-      body: `
-Renders the track vote that runs after the join window closes. Weighted random track options, live vote counts, automatic resolution on timeout — ties resolved by weight.
-
-## Behaviour
-
-- Poll opens for \`Config.PollDuration\` (default 30s) with candidate tracks from the race engine.
-- Players click to vote; votes tally server-side in spz-races.
-- Result feeds directly into world setup — no extra confirmation step.
-`,
-    },
-
-    'spz-raceUI': {
-      title: 'spz-raceUI',
-      tagline: 'Race overlay — telemetry, standings, sectors, 3D checkpoint pill, post-race.',
-      badges: ['NUI', 'Preact + Vite'],
-      body: `
-Every in-race surface, exposed as exports that spz-races drives through a thin NUI bridge.
-
-## Components
-
-- **Telemetry HUD** — lap/CP counters, per-lap timer + total race time (single client-owned clock, no drift), position chip, checkpoint progress bar, PB/record tags.
-- **Sector strip** — S1/S2/S3 with purple/green/yellow colouring, resets each lap.
-- **Standings list** — up to 6 racers: position, **nation flag, race number**, name, live gap. You swap into the last slot if outside the top 6. Toggle with **Z**.
-- **3D checkpoint pill** — GPU-composited billboard projected onto the next checkpoint with live distance; grows urgent as you close in.
-- **Countdown & warmup panels** — staging info, warmup tiles with track/class/grid.
-- **Lobby pill** — E-to-join prompt, queue position, intermission countdown.
-- **Post-race toast** — non-blocking results card (podium, time, best lap, SR/XP deltas). You keep driving; Backspace dismisses.
-
-## Exports
-
-| Export | Purpose |
-| --- | --- |
-| ShowCountdown(data) | Staging + 3-2-1 |
-| UpdateRaceOverlay(data) | Positions / lap / CP merge |
-| UpdateSector(data) / ResetSectors() | Sector strip |
-| UpdateCPWaypoint(data) | 3D pill screen position |
-| ShowPostRaceStats(data) | Results toast |
-| UpdateLobby(data) | Join/queue/intermission pill |
-`,
-    },
-
-    'spz-leaderboard': {
-      title: 'spz-leaderboard',
-      tagline: 'Standings, classes, records and activity in a tablet view.',
-      badges: ['NUI', 'ox_lib'],
-      body: `
-Tablet-style leaderboard UI backed by the leaderboard engine inside spz-races (records, standings, stats — with query caching).
-
-## Data sources
-
-| Callback | Returns |
-| --- | --- |
-| Track records | Top N per track + class, formatted times |
-| Standings | Global points / iRating ordering |
-| Player stats | Personal bests, race history |
-
-Records live in \`track_records\` (races) and \`track_sectors\`; speed-camera bests come from spz-speedcam.
-`,
-    },
-
-    'spz-progression': {
-      title: 'spz-progression',
-      tagline: 'XP, ranks, safety rating, iRating, license promotion.',
-      badges: ['Server', 'Seasons'],
-      body: `
-Sim-racing-style progression driven by race results.
-
-## Systems
-
-- **XP & levels** — points from finishing position convert to XP; levels feed rank display. A clean race (zero incidents) adds a bonus.
-- **Ranks** — D-5 up through S-1; rank shows on nametag plate and license class gates car classes.
-- **Safety Rating (SR)** — clean racing raises it, incidents and DNFs lower it; daily gain/loss caps prevent farming. Incidents are hard world impacts detected client-side (speed drop + body damage together) and server-validated — see spz-races.
-- **iRating** — Elo-style skill rating adjusted by finishing position vs. field strength.
-- **License promotion** — thresholds unlock higher license tiers, gating faster vehicle classes.
-- **Seasons** — periodic reset + archive, seasonal badges into \`player_badges\`.
-- **Login streaks** and per-track anti-grind (same-track diminishing returns).
-`,
-    },
-
-    'spz-speedcam': {
-      title: 'spz-speedcam',
-      tagline: 'Speed camera network with personal bests and global records.',
-      badges: ['26 cameras', 'oxmysql'],
-      body: `
-Fixed camera positions across the map flash you and record your speed.
-
-## Behaviour
-
-- Client detects camera pass + speed; server validates (0–600 km/h sanity) and checks records.
-- **Personal best** per camera per player, upserted only on improvement.
-- **Global record** per camera — beating it broadcasts to the whole server.
-- Compact HUD above the minimap, sized to match, with a browser-preview mode for design work.
-
-## Exports
-
-| Export | Purpose |
-| --- | --- |
-`,
-    },
-
-    'spz-raceline': {
-      title: 'spz-raceline',
-      tagline: 'Auto-recorded racing lines painted on the road.',
-      badges: ['v0.3', 'Standalone-ish'],
-      body: `
-A racing-line trainer. Every race and time-trial lap is captured silently; when a lap **beats your stored best for that track**, the driven line is saved and painted on the road as a flat ribbon — **green** on throttle, **red** on brakes, faint white coasting.
-
-## How it works
-
-- Distance-gated sampling (2m) of position + pedal state. Brake wins over throttle, so trail-braking reads as braking.
-- Lap times come from spz-races (server-measured); the client submits **points only** against a server-issued token — a client can never fake a record.
-- Circuit lines capture through the final-checkpoint → start-line stretch and close into a **continuous loop**, with any residual seam bridged at display time.
-- **Auto-detect**: come within 150m of a track where you have a stored line and it loads and displays automatically; leaves when you do.
-- In a time trial your stored best shows as a ghost line; beating it swaps the ghost instantly.
-- **Ghost car** — the best lap also replays as a translucent car (your own vehicle model, brake lights where you braked), launching in sync with each lap start. Lines carry per-point timing, so the ghost's pace through every corner is your real pace.
-- Two-stage rendering (slow visible-set builder + per-frame painter) keeps the draw cost flat.
-
-## Commands
-
-| Command | Description |
-| --- | --- |
-| /raceline show | Show the line |
-| /raceline hide | Hide the line |
-| /raceline ghost | Toggle the time-trial ghost car |
-
-Storage: \`racelines\` table — one row per player per track, flat JSON point array, first point doubles as the proximity anchor.
-`,
-    },
-
-    /* ══ VEHICLES ══════════════════════════════════════════ */
-
-    'spz-vehicles': {
-      title: 'spz-vehicles',
-      tagline: 'Vehicle registry, class system, race spawning, customization persistence.',
-      badges: ['Registry', 'oxmysql'],
-      body: `
-Owns everything about cars: the class-tiered vehicle registry, race grid spawning, and saved cosmetic setups.
-
-## Systems
-
-- **Registry** — vehicles organised into classes (D → S); license tier gates what you can drive.
-- **Race spawning** — grid placement with per-player spawn confirmation, retries for slow clients, and locked vehicles until GO.
-- **Customization persistence** — liveries and cosmetic mods save per player per model into \`vehicle_customizations\` and re-apply on spawn.
-- **Race prep** — assists profile (TCS/ABS/ESC/launch), fuel/damage reset on grid.
-
-## Key exports
-
-| Export | Side | Purpose |
-| --- | --- | --- |
-| SpawnRaceVehicle(src, model, grid) | server | Grid spawn with confirmation |
-| DespawnVehicle(src) | server | Clean removal |
-| UnlockRaceVehicle(src) | server | Release at GO |
-`,
-    },
-
-    'spz-physics': {
-      title: 'spz-physics',
-      tagline: 'CHASER-style powertrain simulation.',
-      badges: ['v0.4', 'Standalone'],
-      body: `
-Replaces GTA's arcade throttle response with a simulated powertrain, fully standalone — usable on any server.
-
-## Simulation
-
-- **Torque curves** per engine profile — power delivery depends on RPM, not a flat multiplier.
-- **Gear ratios + final drive** — real shift points; Shift/Ctrl for manual up/down.
-- **Clutch simulation** — engagement on launch and shifts.
-- **Rev limiter** and **engine braking**.
-- **PP (Performance Points) rating** — a single comparable number per car computed from the sim parameters.
-- Per-vehicle profiles in \`data/profiles.lua\`; sensible defaults for unprofiled cars.
-
-## HUD
-
-Optional minimal RPM/gear readout (the main speedometer integration lives in spz-speedometer).
-`,
-    },
-
-    'spz-carspawner': {
-      title: 'spz-carspawner',
-      tagline: 'ox_lib vehicle spawn menu.',
-      badges: ['ox_lib', 'Class-gated'],
-      body: `
-Freeroam car spawner as a clean ox_lib context menu — no custom NUI to maintain.
-
-## Behaviour
-
-- Classes → vehicles, gated by your license tier (locked classes shown but disabled).
-- Server-side spawn authority and validation; previous personal vehicle is replaced.
-- Fixed-position preview when browsing from the spawn area.
-`,
-    },
-
-    'spz-speedometer': {
-      title: 'spz-speedometer',
-      tagline: 'Racing speedometer with spz-physics integration.',
-      badges: ['NUI', 'Preact'],
-      body: `
-Minimal racing speedo: speed, RPM bar, gear indicator. Reads live powertrain state from spz-physics when present (real RPM/gear from the sim), falls back to native values without it.
-`,
-    },
-
-    'spz-nos': {
-      title: 'spz-nos',
-      tagline: 'Nitrous system.',
-      badges: ['Client + Server'],
-      body: `
-Chargeable nitrous with visual effects and server-side state sync / anti-cheat validation. Charge management client-side, activation validated server-side.
-`,
-    },
-
-    'spz-vehfunc': {
-      title: 'spz-vehfunc',
-      tagline: 'Indicators, hazards, headlight flash.',
-      badges: ['Client', 'Keybinds'],
-      body: `
-Quality-of-life vehicle controls with smooth, real-car-style light transitions:
-
-- Left / right indicators with self-cancel.
-- Hazard lights.
-- Headlight flash.
-
-All on rebindable keys (FiveM key mapping — Settings → Key Bindings).
-`,
-    },
-
-    /* ══ INTERFACE ═════════════════════════════════════════ */
-
-    'spz-nametag': {
-      title: 'spz-nametag',
-      tagline: 'Minimal 3D nameplates with rank, crew, flag and race number.',
-      badges: ['NUI', 'Statebag-driven'],
-      body: `
-Clean floating nameplates: a solid rank plate (colour-coded by license class) plus a floating name row — **nation flag**, crew tag box, name, and an italic **race number chip** (F1 number-plate style). A speaking equalizer appears on the plate with pma-voice activity.
-
-## Design notes
-
-- Pure statebag reads (\`spz:name\`, \`spz:crew\`, \`spz:nation\`, \`spz:raceNumber\`, …) — zero server round-trips per frame.
-- GPU-composited transforms (no layout thrash), distance scaling and fade.
-- Flags ship as local 48px WebP assets — no external CDN at runtime.
-- Toggle with a rebindable key.
-`,
-    },
-
-    'spz-loading': {
-      title: 'spz-loading',
-      tagline: 'Minimal loading screen with local video and audio.',
-      badges: ['loadscreen', 'Preact'],
-      body: `
-Registered as a FiveM \`loadscreen\`. Plays bundled local video + audio (no YouTube dependency), logo-only branding, segmented progress bar, and a volume control. Assets live in the resource's \`public/\` folder — swap the video/logo to rebrand.
-`,
-    },
-
-    'spz-ui': {
-      title: 'spz-ui',
-      tagline: 'Shared UI component library (build-time).',
-      badges: ['Preact', 'Design system'],
-      body: `
-The design system behind every SPiceZ NUI: shared Preact components (cards, badges, buttons, modals, tables, toasts, progress bars…) and the token stylesheet (colours, fonts, spacing).
-
-**Build-time only** — the pipeline copies \`src/components/\` and \`src/styles/\` into each consuming resource before its Vite build. It is not ensured on the server and ships no runtime code.
-`,
-    },
-
-    /* ══ PLATFORM ══════════════════════════════════════════ */
-
-    'spz-rpc': {
-      title: 'spz-rpc',
-      tagline: 'Discord Rich Presence.',
-      badges: ['Client + Server'],
-      body: `
-Live Discord presence: current activity (freeroam / in queue / racing), track name, position and class while racing. Configure your Discord application ID in \`config.lua\`.
-`,
-    },
-
-    'spz-fpscap': {
-      title: 'spz-fpscap',
-      tagline: '60 FPS fairness cap.',
-      badges: ['Standalone', 'Client'],
-      body: `
-GTA physics behave differently at very high frame rates — uncapped FPS is a lap-time advantage. This resource detects clients running above 60 FPS and blocks play until they limit it, with clear on-screen instructions. Fully standalone.
-`,
-    },
-
-    'spz-log': {
-      title: 'spz-log',
-      tagline: 'Logging system.',
-      badges: ['Server'],
-      body: `
-Structured logging for framework events — race lifecycle, player joins, admin actions — with configurable levels and outputs in \`config.lua\`.
-`,
-    },
-
-    'spz-txrecipe': {
-      title: 'spz-txrecipe',
-      tagline: 'The txAdmin deployment recipe.',
-      badges: ['v3.0', 'YAML'],
-      body: `
-One YAML file that builds the whole server:
-
-- Downloads \`cfx-server-data\`, all dependencies, and every \`spz-*\` module from GitHub (release zips for NUI-built resources, source for Lua-only ones).
-- Stores the database connection (\`connect_database\`) — **no SQL import step**; the schema applies itself on first boot via spz-core migrations.
-- Writes a production \`server.cfg\`: correct ensure order, \`sv_enforceGameBuild 3407\`, \`sv_stateBagStrictMode true\`, ACE permissions, and commented tuning sections.
-- Ships branding assets (logo, banner) and \`permissions.cfg\`.
-
-Recipe URL:
-
-\`\`\`
-https://raw.githubusercontent.com/SPiceZ21/spz-txrecipe/main/spz-recipe.yaml
-\`\`\`
-`,
-    },
-
-    /* ══ REFERENCE ═════════════════════════════════════════ */
-
-    'dependencies': {
-      title: 'Dependencies',
-      tagline: 'Third-party resources the recipe installs.',
-      badges: ['Auto-installed'],
-      body: `
-All installed automatically by the recipe — listed here for reference.
-
-| Resource | Role |
-| --- | --- |
-| oxmysql | Async MySQL driver. Every DB access goes through \`MySQL.*.await\` — no blocking sync calls anywhere in the framework. |
-| ox_lib | Shared library — notifications, context menus, input dialogs, callbacks. Loaded via \`@ox_lib/init.lua\`. |
-| fivem-appearance | Standalone character creator & clothing editor (no framework required). Pinned to v1.2.1 (last .zip release). |
-| pma-voice | Proximity voice chat. |
-| screenshot-basic | Screenshot capture (vehicle previews; overtake-clip fallback still). |
-| screencapture | WebM video recording for overtake auto-clips, uploaded to FiveManage. |
-| vMenu | Admin menu — staff tooling until spz-admin ships. Always ensured last. |
-`,
-    },
+ "groups": [
+  {
+   "title": "Get Started",
+   "pages": [
+    "overview",
+    "beta",
+    "installation",
+    "first-time-setup",
+    "architecture"
+   ]
   },
+  {
+   "title": "Gameplay",
+   "pages": [
+    "race-flow",
+    "progression"
+   ]
+  },
+  {
+   "title": "Modules",
+   "pages": [
+    "modules"
+   ]
+  },
+  {
+   "title": "Core",
+   "pages": [
+    "spz-core",
+    "spz-identity",
+    "spz-spawn",
+    "spz-appearance",
+    "spz-loading"
+   ]
+  },
+  {
+   "title": "Racing",
+   "pages": [
+    "spz-races",
+    "spz-poll",
+    "spz-raceUI",
+    "spz-leaderboard",
+    "spz-progression",
+    "spz-raceline",
+    "spz-speedcam",
+    "spz-spectate",
+    "spz-replay"
+   ]
+  },
+  {
+   "title": "Vehicles",
+   "pages": [
+    "spz-vehicles",
+    "spz-carspawner",
+    "spz-tunners",
+    "spz-vehfunc",
+    "spz-speedometer"
+   ]
+  },
+  {
+   "title": "Interface",
+   "pages": [
+    "spz-pausemenu",
+    "spz-nametag",
+    "spz-chat",
+    "spz-emotes"
+   ]
+  },
+  {
+   "title": "Social",
+   "pages": [
+    "spz-crew",
+    "spz-discord",
+    "spz-rpc"
+   ]
+  },
+  {
+   "title": "Minigames",
+   "pages": [
+    "spz-minigames",
+    "spz-colorrush",
+    "spz-cyclone",
+    "spz-bomb",
+    "spz-demolition",
+    "spz-pursuit"
+   ]
+  },
+  {
+   "title": "Platform",
+   "pages": [
+    "spz-admin",
+    "spz-analytics",
+    "spz-fpscap",
+    "spz-txrecipe"
+   ]
+  },
+  {
+   "title": "Reference",
+   "pages": [
+    "keybinds",
+    "commands",
+    "database"
+   ]
+  }
+ ],
+ "pages": {
+  "overview": {
+   "title": "SPiceZ-Core",
+   "tagline": "An open-source, racing-only framework for FiveM.",
+   "badges": [
+    "Public beta",
+    "Lua 5.4",
+    "FiveM"
+   ],
+   "body": "**SPiceZ-Core** (`spz-*`) is an open-source, racing-only framework for FiveM. It turns a\nFiveM server into a competitive racing server: a continuous race loop with voting,\nserver-side timing, ranks and records, plus freeroam, crews and minigames around it.\n\n> **Public beta.** Everything here is playable and running on live servers, but expect\n> rough edges. See [Beta notes](#/beta) for what is in scope and how to report issues.\n\n## What you get\n\n- **A full race loop** — queue, vote on track and class, warmup, grid start, race, results — running on its own.\n- **Server-authoritative timing** — lap, sector and finish times are measured on the server; no client decides a result.\n- **Progression** — XP, safety rating, iRating-style skill and rank tiers, records and rivals.\n- **Racing tools** — Time Trials, duels, recorded best lines with ghost cars, replays with broadcast cameras, spectate.\n- **Track Studio** — build new tracks in the world by driving the route.\n- **Freeroam & social** — car spawner, tuner, emotes, crews with radio, chat, nametags.\n- **Minigames** — Color Rush, Cyclone, Bomb Tag, Demolition and Hot Pursuit.\n- **One-click install** — a txAdmin recipe; the database builds itself on first boot.\n\n## Principles\n\n1. **Racing only** — no jobs, housing or crime systems.\n2. **Modular** — every feature is its own resource; run what you want.\n3. **Event-driven** — modules talk only through exports and events.\n4. **Server decides** — race state, positions and results live on the server.\n5. **One schema owner** — all SQL lives in `spz-core/migrations/`.\n\n## Where to start\n\n| You want to | Go to |\n|---|---|\n| Get a server running | [Installation](#/installation) |\n| Configure it after first boot | [First-time setup](#/first-time-setup) |\n| See every module | [Modules](#/modules) |\n| Understand how the pieces fit | [Architecture](#/architecture) |\n| Know how a race runs | [Race flow](#/race-flow) |\n| Look up a key or command | [Keybinds](#/keybinds) · [Commands](#/commands) |\n\n## Links\n\n- GitHub: [github.com/SPiceZ21](https://github.com/SPiceZ21)\n- txAdmin recipe: [spz-txrecipe](https://github.com/SPiceZ21/spz-txrecipe)",
+   "source": null
+  },
+  "beta": {
+   "title": "Beta notes",
+   "tagline": "What is in the public beta, what to expect, and how to report issues.",
+   "badges": [],
+   "body": "SPiceZ-Core is in **public beta**. The modules listed in [Modules](#/modules) are\nthe beta release: they are installed by the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe)\nand covered by these docs.\n\n## Status\n\n| Area | State |\n|---|---|\n| Race loop, timing, results | Stable — runs unattended |\n| Progression, records, leaderboard | Stable |\n| Track Studio | Usable; new in this beta |\n| Minigames | Playable; balance still moving |\n| Replays, spectate | Usable |\n\n## What to expect\n\n- **Breaking changes are possible** between beta versions. Config keys and exports may be renamed; release notes call them out.\n- **Schema changes only add.** New migrations are appended in `spz-core/migrations/`; existing ones are never edited, so upgrading never needs a manual SQL step.\n- **Versions are per module.** Each repository releases on its own; the recipe always pulls the latest release.\n\n## Known limitations\n\n- **Game build 3407** is enforced by the recipe's `server.cfg`; other builds are untested.\n- **Bomb Tag and Demolition** need the third-party `iak_demolition` arena map, which is not included.\n- **Controller binds** print `Invalid I/O parameter pairing` warnings in the F8 console on some clients; keyboard binds are unaffected.\n- **Custom tracks** are stored in `spz-races/data/custom_tracks.json`, not the database — back the file up.\n\n## Not part of the beta\n\nThese live in the organisation but are not installed by the recipe or covered here:\n`spz-physics`, `spz-carfx`, `spz-vegetation`, `spz-rocketleague`, `spz-tutorial`,\n`spz-log`, `spz-grafnana`, `spz-checkpointprop`.\n\n## Reporting issues\n\nOpen an issue on the module's GitHub repository with:\n\n1. the module and version (from its `fxmanifest.lua`),\n2. what you did and what happened,\n3. the server console and F8 output around it.",
+   "source": null
+  },
+  "installation": {
+   "title": "Installation",
+   "tagline": "Deploy a full server with the txAdmin recipe, or install by hand.",
+   "badges": [],
+   "body": "## Requirements\n\n| Requirement | Notes |\n|---|---|\n| FXServer artifact | Build `27926` or newer |\n| Game build | `3407` (`sv_enforceGameBuild 3407`) |\n| MySQL / MariaDB | Any running instance |\n| FiveM licence key | [keymaster.fivem.net](https://keymaster.fivem.net/) |\n\n## Option A — txAdmin recipe (recommended)\n\n1. txAdmin → **Server Setup** → **Remote URL Template**.\n2. Paste:\n   ```\n   https://raw.githubusercontent.com/SPiceZ21/spz-txrecipe/main/spz-recipe.yaml\n   ```\n3. Enter the server name, licence key and database connection.\n4. Let it finish, then start the server.\n\nThe recipe downloads every dependency and module and writes `server.cfg` in the right\norder. Nothing else is needed — the database schema builds itself on first boot.\n\n## Option B — manual\n\nDownload each module from [github.com/SPiceZ21](https://github.com/SPiceZ21) into\n`resources/[spz]/`. Load order matters: a module started before its dependencies will not\nfind their exports.\n\n```cfg\n# Dependencies\nensure oxmysql\nensure ox_lib\nensure fivem-appearance\nensure pma-voice\nensure screenshot-basic\nensure screencapture\nensure bob74_ipl\n\n# Core\nensure spz-rpc\nensure spz-loading\nensure spz-core\nensure spz-identity\nensure spz-chat\nensure spz-pausemenu\nensure spz-appearance\nensure spz-emotes\nensure spz-spawn\nensure spz-admin\n\n# Racing\nensure spz-speedcam\nensure spz-vehicles\nensure spz-races\nensure spz-progression\nensure spz-nametag\nensure spz-poll\nensure spz-raceUI\nensure spz-leaderboard\nensure spz-carspawner\nensure spz-fpscap\nensure spz-raceline\nensure spz-speedometer\nensure spz-vehfunc\nensure spz-tunners\nensure spz-spectate\nensure spz-replay\nensure spz-analytics\nensure spz-crew\nensure spz-discord\n\n# Minigames (hub first)\nensure spz-minigames\nensure spz-colorrush\nensure spz-cyclone\n# ensure iak_demolition   # third-party arena map, needed by the two below\nensure spz-bomb\nensure spz-demolition\nensure spz-pursuit\n```\n\n`fivem-appearance` needs its thumbnail pack (`images/`) next to its `fxmanifest.lua`; the\nrecipe adds it automatically.\n\n## Database\n\nPoint `oxmysql` at your database (`set mysql_connection_string ...`). That is the only\ndatabase step — there are no `.sql` files to import. `spz-core` applies every file in\n`spz-core/migrations/` on first boot and records it in `spz_migrations`.\n\n## Verify\n\nStart the server and check the console for:\n\n- migrations applied, then `spz-core` reporting ready,\n- no `Failed to load resource` lines for `spz-*`,\n- a player connecting reaching character creation, then the play menu.",
+   "source": null
+  },
+  "first-time-setup": {
+   "title": "First-time setup",
+   "tagline": "What to configure once the server boots cleanly.",
+   "badges": [],
+   "body": "What to configure once the server boots cleanly.\n\n## 1. Core\n\n`spz-core/config.lua` — intermission length, allowed classes, admin identifiers,\ndefault time and weather. ACE permissions for `group.admin` live in `server.cfg` /\n`permissions.cfg`.\n\n## 2. Spawn points\n\n`spz-spawn/config.lua`:\n\n```lua\nConfig.Spawns = {\n    [1] = { label = 'Safe Zone', coords = vector4(x, y, z, w) },\n}\n```\n\n## 3. Races\n\n`spz-races/config.lua` — join window, poll duration, warmup length, finish window,\nintermission and spawn mode. Tracks live in `spz-races/data/tracks.lua` (101 shipped: 76\ncircuit, 25 sprint); build new ones in-game from the admin menu (**Tracks → Make a new track**).\n\nTwo knobs worth understanding before you touch them:\n\n| Setting | Why it matters |\n|---|---|\n| `SpawnStaggerMs` (800) + `GridTpSettleMs` (400) | Per-racer cost of building the grid. The whole grid must spawn inside `SpawnTimeout` (30 s) or the session stages while cars are still being created. At 1.2 s per racer a full 16-car grid takes ~19 s. |\n| `Rewind.maxCreditPerLapMs` (15 s) | Clock a rewind can win back, **per lap** — a 3-lap circuit allows three times this. Only governs how forgiving the mid-race feel is: any rewound run is already barred from records and personal bests. |\n\n## 4. Vehicles\n\n`spz-vehicles/data/vehicles.lua` is the master table — what exists, which class it belongs\nto and what may be unlocked. Class definitions are in `shared/classes.lua`.\n\n## 5. Discord integration\n\n| Resource | Set |\n|---|---|\n| `spz-discord` | `set spz_discord_token` and `set spz_discord_guild` in `server.cfg` for race embeds, whitelist and role-based admin |\n| `spz-rpc/config.lua` | `Config.AppId` and the art asset keys from your Discord app |\n\n## 6. Theme and optional modules\n\nEvery SPiceZ UI reads the same theme convars, so one block re-skins the loading screen,\nHUD and menus: `setr spz_theme_accent \"#ff6200\"` (also `accent2`, `bg`, `bg2`, `danger`, `gold`).\n\n| Resource | Configure |\n|---|---|\n| `spz-spectate/config.lua` | Live race board — rows per view, keys, post-race hold |\n| `spz-speedcam/config.lua` | Detection radius, minimum speed, units, blips |\n| `spz-fpscap/config.lua` | Frame cap and whether it enforces or only warns |\n| `spz-minigames/config.lua` | Hub key, NPC locations, return spawn |\n\n## 7. Smoke test\n\n1. Connect with a fresh identifier — character creation should appear, then the play menu.\n2. Spawn a car (`/car`), check the speedometer and nametags.\n3. `/joinrace`, let the poll and countdown run, complete a lap.\n4. Confirm results, XP and the leaderboard update afterwards.",
+   "source": null
+  },
+  "architecture": {
+   "title": "Architecture",
+   "tagline": "Layers, rules, boot sequence and the events that tie modules together.",
+   "badges": [],
+   "body": "## Layers\n\n```\noxmysql · ox_lib · fivem-appearance          third-party dependencies\n        │\n     spz-core                                sessions · buckets · migrations · config\n        │\n   ┌────┴─────┬──────────────┐\nspz-identity  spz-appearance  spz-spawn      player layer\n        │\n   spz-vehicles                              vehicle registry\n        │\n    spz-races                                race engine (server-authoritative)\n        │\n   ┌────┴──────┬──────────────┬────────────┐\nspz-progression spz-raceUI  spz-leaderboard  spz-poll ...\n```\n\nLoad order follows this diagram. A module started before its dependencies will not find\ntheir exports.\n\n## Rules\n\n**One schema owner.** All SQL lives in `spz-core/migrations/`. Each file applies once and\nis recorded in `spz_migrations`, so restarts and upgrades are no-ops. A module never\ncreates or alters another module's tables — schema changes go in a new numbered migration.\n\n**Exports for reads, events for signals.** Need a player's profile? Call\n`exports['spz-identity']:GetProfile(source)`. Need to react to something happening? Listen\nfor the event.\n\n**Event names are constants, not literals.** `SPZ.Events` (`spz-core/shared/events.lua`) is\nthe registry; `spz-races/shared/events.lua` merges the race names into the same table. A\nresource that needs them imports `'@spz-core/shared/events.lua'` in its `shared_scripts` —\nresources have separate Lua states, so the table does not cross a resource boundary on its\nown. A mistyped literal is silent: the handler simply never fires.\n\n**One emitter per event.** An event that drives scoring, persistence or payouts has exactly\none place it may be fired from, and that is documented where it is defined. Anything that\nwants to react earlier gets its own name — `SPZ:racerFinished` exists precisely so nothing\nneeds to borrow `SPZ:raceEnd`.\n\n**Server decides.** A client may *propose* an event; the server accepts it only if it can\nfalsify it from data the server owns. Checkpoint hits are checked against the gate the\nracer was due to cross and their position relative to it; incident reports are speed-sanity\nchecked and capped per race; rewind claims are clamped per claim, per lap and against the\nhistory buffer. The client owns timing precision — only it has the frame — but no client\ninput decides a race result.\n\n**Config-driven.** Every tunable lives in the module's `config.lua`. Core config is synced\nto clients by `spz-core/client/config_sync.lua`.\n\n## Boot sequence\n\n1. `spz-core` starts, applies `migrations/*.sql`, then fires `SPZ:coreReady`.\n2. Modules register themselves with the core registry and wait for that event.\n3. A player connects → `spz-core` creates a session → `SPZ:playerConnected`.\n4. `spz-identity` resolves or creates the profile, then fires `SPZ:playerReady` (or\n   `SPZ:openCharacterCreation` first, for new players).\n5. `spz-spawn` shows the play menu and puts the player in the world.\n\n## Routing buckets\n\nRaces run in isolated routing buckets so a race world never sees free-roam traffic.\n`spz-core/server/buckets.lua` owns creation, assignment and cleanup; `spz-races` requests\na bucket per race, and `spz-spectate` moves a viewer into the target's bucket so isolated\nracers stay visible.\n\nA bucket is released on **both** exits: the normal one (`RunRaceCleanup`) and the abort\npath (`ResetToIdle` — empty queue, dead poll, nobody spawned). Any code path that can end a\nrace owes the bucket back; leaking one strands its players and the registry entry lives for\nthe server's whole uptime.\n\n## Key events\n\n| Event | Fired by | Meaning |\n|---|---|---|\n| `SPZ:coreReady` | spz-core | Framework up, migrations applied |\n| `SPZ:playerConnected` | spz-core | Session created |\n| `SPZ:openCharacterCreation` | spz-identity | New player needs a character |\n| `SPZ:characterReady` | spz-identity | Profile initialised |\n| `SPZ:playerReady` | spz-identity | Player data is safe to read |\n| `SPZ:playerDisconnected` | spz-core | Session teardown |\n| `SPZ:raceStateChanged` | spz-races | Race lifecycle transition (mirrors `GlobalState.raceState`) |\n| `SPZ:racerFinished` | spz-races | One racer crossed the line — reactive use only, field incomplete |\n| `SPZ:raceEnd` | spz-races | Race over, results final. Scoring and persistence hang off this |\n| `SPZ:standings` | spz-races | Live running order for out-of-race consumers (the live race board in spz-spectate) |\n| `SPZ:progressionApplied` | spz-progression | Once per race, after scoring: every player's before/after RP, rank, SR, iRating |\n| `SPZ:rankChanged` | spz-progression | A player's rank string moved (with real promotion/demotion direction) |\n| `SPZ:licenseUnlocked` | spz-identity (`UnlockLicense`) | Class letter went up; the only emitter |\n\n`spz-races` also drives lifecycle through `GlobalState.raceState`, which every client reads\nfor free. Statebag handlers fire on every *set*, not only on a change, so the transition\nhandler is one-shot guarded — re-asserting the current value must never replay a phase.",
+   "source": null
+  },
+  "race-flow": {
+   "title": "Race flow",
+   "tagline": "How a race runs, from queue to results.",
+   "badges": [],
+   "body": "One continuous cycle, driven by `spz-races` on the server. There is no fixed schedule and\nno minimum player count — the first person to queue starts the clock.\n\n## The cycle\n\n| Phase | What happens |\n|---|---|\n| **Idle** | Nobody queued. The first `/joinrace` arms a dynamic join window. |\n| **Poll** | Players vote on track and vehicle class ([spz-poll](#/modules)). |\n| **Warmup** (90 s) | World and bucket set up, grid spawned. Doubles as spawn grace for slow clients. `/leaverace` here tears everything down cleanly. |\n| **Grid** | Cars settle on the start point. Ghosting is armed before vehicles spawn, so a single spawn point is safe. |\n| **Countdown** | 3-2-1, then GO. |\n| **Live** | Checkpoints, sectors, positions, overtakes and incidents. |\n| **Finish** | The first finisher arms a straggler countdown — warnings at 60 / 30 / 10 s, then force-DNF. The podium never waits. |\n| **Results + intermission** | Run in parallel; the next join window arms immediately. |\n\nPost-race overlap cuts what used to be ~110 s of dead time to roughly 60 s.\n\n## Isolation\n\nEach race runs in its own routing bucket, so racers never see free-roam traffic. Players\nand their cars never collide with each other anywhere — ghosting is global and\nclient-side.\n\n### Three separate systems\n\nGTA resolves entities against each other in three ways, and each needs its own handling.\nConflating them is the source of every collision bug this project has had:\n\n| System | What it does | Controlled by |\n|---|---|---|\n| Contact response | Two entities push each other | `SetEntityNoCollisionEntity` |\n| Camera sweep | The chase cam collides with bodywork | `DisableCamCollisionForObject` |\n| **Placement resolver** | Ejects entities created or teleported inside each other | **Nothing — it cannot be switched off** |\n\nThe third is the one that bites. It runs on vehicle creation and on teleport, and no\ncollision exclusion touches it. The grid used to spawn every car on **identical\ncoordinates** (`SpawnMode = \"point\"`, radius 0) on the theory that ghosting made overlap\nsafe; it does not, and that is what launched cars across the map on race start. Two cars at\none coordinate are overlapping for the entire race, and every physics re-evaluation is\nanother chance to be thrown.\n\nThe fix is geometry, not flags: cars spawn on separated slots, and point mode floors its ring\nradius rather than honouring a value that cannot work. The ped is also **frozen** on its slot\nuntil its car exists, because the car being created around a standing ped ejects the ped —\nreleased as soon as the vehicle appears rather than once the player is seated, so a failed\nwarp can never weld someone to the tarmac.\n\n### Warmup grid vs. race start\n\nThe two phases want opposite shapes, so they are configured separately:\n\n| Phase | Mode | Why |\n|---|---|---|\n| Warmup | `Config.WarmupSpawnMode` = `grid` | Nothing is being won yet, and spread-out slots are the safe way to put a full field on one road |\n| Race start | `Config.RaceStartMode` = `point` | A staggered grid decides places before the lights |\n\nStarting a race from the warmup grid hands row 1 roughly **56 m** over row 8 on a full field.\nThe race re-stage collapses the field onto **one coordinate** (`PointSpawnRadius = 0`), which\nis the only genuinely equal start there is.\n\nThat works here and **not** at vehicle creation, and the difference is the whole point. At the\nre-stage the cars already exist, they are frozen either side of the teleport, and they are\nghosted against each other — nothing simulates contact while they sit stacked on the line, and\non GO they drive through one another. At creation there is no such window: the resolver runs as\nthe vehicle comes into existence, which is why warmup still uses real slots.\n\nOne line of code decides whether this works. `SetEntityCoords`' final argument is `clearArea`,\nwhich asks the engine to **shove whatever is already at the destination out of the way**. With\nevery car re-staged onto the same coordinate, each arrival was booting the cars that got there\nbefore it, one after another — and no collision flag touches that path, because it is not a\ncollision. It is the engine doing exactly what it was asked. It is now `false`.\n\nA non-zero `PointSpawnRadius` turns the start into a ring instead — still equal-distance, but\nspread out. Ring spacing is driven by car **length**, not width (every car faces down the track,\nso the two at the front and back of the circle sit nose-to-tail); six metres of arc per car keeps\na minimum of 5.4 m between any pair. Past `Config.PointSpawnMaxRadius` a ring is wider than the\nroad, so it falls back to a grid and logs why, and `Config.GridCarsPerRow` controls how flat that\nfallback is — sixteen cars at 2 abreast is eight rows and 56 m of stagger, at 4 abreast four rows\nand 24 m.\n\n### Ghosting cadence\n\nThe no-collision flag is not as permanent as it looks. It is dropped when an entity is\nre-created (stream out and back in), when network ownership migrates, and whenever anything\ncalls `SetEntityCollision` on either half of the pair — which `spz-spawn` does after every\nspawn and `spz-appearance` after every outfit change. None of those change the entity\n*handle*, so a signature check on handles cannot see them.\n\n`spz-core/client/ghost.lua` therefore splits the work by who needs it:\n\n- **Near pass, every frame** — your ped and your car against every player within 70 m. This\n  is the only set whose physics you simulate, so it is the only set where a missing flag can\n  throw *you*. A 200 ms re-assert used to leave an ~11 m hole at racing speed, which is one\n  real hit and reads as \"ghosting randomly failed\".\n- **Full pass, throttled** — every remaining pair, including remote-vs-remote. Worth doing\n  for entities you own, but not per frame: you do not simulate contact between two cars\n  someone else owns, you replay the positions their owner sends.\n\nThat last point bounds what any of this can fix. **Collision is resolved by the network\nowner**, so ghosting is only ever as good as the worst-behaved client in the lobby — if\nanother player's client has not ghosted yet, you will be shown the bounce their client\nsimulated no matter what flags you set locally.\n\nThe camera flag lasts exactly one frame, so it is re-asserted every frame, in two passes\nwith the same split:\n\n- **Players, every frame.** Handles resolved fresh, so a car that streams in alongside you\n  is covered on the frame it appears. This is the pass that matters in a race, where cars\n  close on each other fast enough that a cached list is already stale.\n- **A throttled pool sweep** for what player enumeration cannot see: a ghosted car with\n  nobody in it, a remote ped whose seat has not synced, duel and raceline ghosts,\n  checkpoint gate props. None of those close on you in a tenth of a second.\n\nNPC traffic is deliberately excluded — those cars really do collide, so the camera should\ncollide with them too.\n\n## Checkpoints and sectors\n\nCheckpoints use custom gate props that swap `_a` → `_b` as you cross, so the hit is\nvisually confirmed. Every track is split into three sectors by checkpoint count; sector\ntimes are coloured purple / green / yellow and stored per player, track and class. The HUD\nshows a live +/- split against your best at each checkpoint.\n\nLap count is derived from measured track length: long circuits run 2 laps, short ones 3.\n\n**The CP distance pill** is pinned to the checkpoint with a stem down to the gate point,\nanswering *where is the gate*. Useful on an unfamiliar track or when a gate sits behind\ngeometry. It is **on by default**.\n\n### Turning it on and off\n\nIt is server-controlled. The default lives in `spz-races/config.lua`:\n\n```lua\nConfig.Hud = {\n  CpDistancePill = true,\n}\n```\n\nIt can be overridden live from `server.cfg` without editing the file or restarting the\nresource — the convar wins when set:\n\n```\nsetr spz_hud_cp_pill 0\n```\n\n`/racehud` (admin, or the server console) re-reads the convar and republishes. The flag\ntravels in `GlobalState`, so a change reaches every connected client immediately; nobody has\nto reconnect.\n\nAn unset convar is told apart from one explicitly set to `0` by reading it as a string with\na sentinel default — `GetConvarInt` cannot express that difference, since it returns `0` for\nboth \"off\" and \"absent\", which would silently override the config file with a value nobody\nset.\n\nThe client sends the sub-object only when the server has the readout enabled, so a disabled\nreadout costs no projection work and its absence from the payload *is* the off switch —\nthere is no separate visibility flag that could drift out of step.\n\n**The map shows three gates ahead**, not one: the gate you are driving at, plus the two\nafter it. They stay numbered and fade with distance ahead so the order reads at a glance,\nand they are long-range blips so they sit on the minimap edge before you can see them.\n\nOnly the active gate carries a **GPS route line**. The game draws one line per routed blip\nand three overlap into an unreadable tangle, so the lookahead is carried by the gates\nthemselves being visible rather than by more route lines competing with the one you are\nactually following. The lookahead wraps on circuits — two gates past the last one is gate\ntwo of the next lap.\n\nEvery crossing is banked against a progress index (gates cleared since GO), which is what\nlets the tower state gaps in **seconds** rather than \"+2 CP\": the gap is how long ago the\ncar ahead was standing where you are now. It stays a real time across a lap boundary — a\nlapped car reads as the time it is actually down, with a `1L` suffix. `interval` (gap to\nthe car directly ahead) is published alongside `gap` (gap to the leader).\n\nA gate scores when you cross its plane between the posts, in **either direction**.\n\nDirection used to be enforced — only a \"forward\" crossing counted — and it was removed on\nrequest. Players who spun, reversed through a gate, or arrived at it from the far side found\nthe checkpoint silently refusing to count, and being stranded on track is worse than the\nshortcut this allows. **Order and proximity are still enforced server-side**: it has to be\nthe gate you were due to cross and you have to be near it. Only the direction is free.\n\nTwo things the crossing test depends on:\n\n- The gate plane is **infinite**, so which side a player is on only means anything *near\n  the gate*. Side is tracked inside a corridor (50 m deep, one gate-width of lateral slack\n  each way) and forgotten outside it, because inside that corridor the only way to get from\n  one side to the other is to actually pass the gate. Two earlier versions got this wrong in\n  opposite directions: assuming \"before\" everywhere scored the gate the instant it armed if\n  you happened to be past the plane, and reading the raw side everywhere seeded you as\n  \"past\" while you were still far out on the flank, so driving through correctly registered\n  nothing and you had to double back to score.\n\n  The corridor is coupled to the detector's poll rate — the whole corridor must be sampled\n  at 20 ms or better, or a fast car can enter it and cross the plane inside one sample.\n  Change one and change the other.\n- A **hysteresis band** of 0.4 m around the plane. A car sitting on the line is never\n  perfectly still — suspension settle, collision jitter and network correction all wobble it\n  by centimetres, and each wobble across the plane is a side change. This matters much more\n  now that a crossing counts either way: one-directional scoring only ever saw half of that\n  jitter.\n\n`heading` still orients the plane, and still has to survive persistence (every conversion in\n`server/creator.lua` carries it) — it is what makes the start line seed as \"before\" so the\nfirst checkpoint of a race can be scored at all.\n\n**Missing a gate is told to you, not left to be discovered.** The crossing test already\nknows the difference between going through the gate and going past it — same plane flip,\nbut wide of the posts — so a miss raises a prompt offering both recoveries by key: `B` to\nrewind, `F4` to teleport to the last checkpoint you crossed. Both keys come from config\n(`Config.Rewind.key`, `Config.RecoverKey`), so the prompt can never name a key that does\nsomething else. Without it the first sign of\ntrouble is the next gate never arming, and eventually the idle-kick DNF.\n\nA miss also requires being **near** the gate: within one gate-width of a post. The plane\nhas no width, so a flip can happen hundreds of metres to the side, where nothing has been\nmissed — the car is simply elsewhere on the track.\n\n## What you cannot do mid-race\n\nSpawning or deleting a car during a race, a queue or a time trial is refused **server-side**\n(`spz-carspawner`). The radial menu also hides those options while a route is running, but\nthat is presentation: `/car` and `/dv` are still typeable and the net event behind the menu\nis still callable from a client, so the decision belongs on the server. A car the race\nengine never issued desyncs the field, orphans the old vehicle in the race bucket, and\ncarries none of the race's handling or damage state.\n\nYour client decides *when* you crossed — it owns the frame the gate plane was passed, and\nthe server cannot see that. The server decides *whether you could have*: a claimed hit is\nrejected unless the checkpoint is the one you were actually due to cross and your ped is\nwithin range of it. The radius is deliberately loose (it has to tolerate a network tick of\nlag), so it never affects real racing — it exists so a modified client cannot claim a lap\nit never drove.\n\n## Rewind\n\nHold `B` to scrub the car backward along its recent path, Forza-style, then release to\nresume from that point with the momentum it had. The race clock rewinds with the car, so a\nrewind reads as *undo* rather than *teleport plus penalty*.\n\nBounded by the rolling history buffer (10 s) and by a server-side ceiling on how much clock\na single lap can win back (`Config.Rewind.maxCreditPerLapMs`, 15 s). Every gate you scrub\nback past still has to be re-crossed for real.\n\n**Races only.** Time trial has no rewind: the key does nothing, no path is recorded and\nno allowance is shown on the dash. The clock is the whole point of that mode, and a TT lap\nfeeds the stored line, the ghost and duel targets — a refunded lap there would seed a\ntarget nobody can match honestly.\n\n**A rewound run is not a record.** Any run that credits even a millisecond back is barred\nfrom track records and personal bests, and its driven line is not stored. Rewinding inside\na **duel** earns no clock credit at all: duels pay real credits against a stored time, so\nthe rewind still works but costs exactly what it costs.\n\n## Reconnecting\n\nA crash or timeout holds your grid slot for 60 seconds. Rejoin inside that window and your\nlap, checkpoint and time are restored at your last checkpoint instead of an instant DNF.\n\n## Overtakes\n\nA completed pass is detected server-side from the live running order. It posts an auto-clip\nto Discord, toasts the whole field, and the **overtaker's car spits nitrous flames** — a\nnetworked particle, so everyone sees it on that car. Both share one per-pair cooldown\n(`Config.OvertakeCooldown`), so a back-and-forth battle cannot spam either.\n\nThe flames are visual only. `Config.OvertakeNos.boost` can add a real Rocket-Voltic speed\nboost on top, and is **off by default**: paying for a pass with pace makes overtaking\nself-reinforcing, which is a racing decision rather than a cosmetic one.\n\n## Time trial\n\n`/timetrail` — pick a car, then a track. The car spawns at a head-start point before the\nline, and hotlaps roll continuously: cross the line, the lap banks, the next one starts.\nNo stop-start countdown. On circuits the start/finish line is the last checkpoint of the\nlap. Race-join prompts are suppressed inside a time trial.\n\n**Leaving the car ends the run.** A time trial is the car — on foot there is no lap to\ntime, and the session would otherwise sit open holding a routing bucket and a spawned\nvehicle. You get a few seconds to climb back in before it ends; getting knocked out of the\nseat or ragdolling does not count while you are still getting back in.\n\n## Duels\n\n`/duel <player|id> <track> <stake>` — stake credits against an opponent's **stored best\nline**, replayed as a translucent ghost. The opponent does not need to be online; you are\nracing their recorded lap.\n\nThe stake is escrowed immediately and the server compares its own measured time to the\nopponent's stored best — the client never reports the outcome. Win pays `stake × 2`. By\ndefault (`Config.Duel.HouseFunded`) winnings are a house bounty, so an offline opponent is\nnever charged; flip it off for opponent-matched stakes. Quitting, disconnecting or a failed\nstart voids the duel and refunds the escrow, and a duel against a player with no stored\nline on that track is rejected up front. Rewind earns no clock credit inside a duel. Every\nduel lands in the `duels` ledger.\n\n## Watching a race\n\nAnyone not racing can `/spectate` — the viewer is moved into the target's bucket so\nisolated racers stay visible.\n\nEveryone outside the race also gets a passive **live race board** in the top-right corner:\nthe track, the leader's lap, and the running order with real time gaps, and held\nreconnect slots marked `DC`. It needs no command and takes no input — it\nappears when a race goes live and holds the final classification for a few seconds after\nthe flag.\n\n`F7` cycles it between the full board, a three-row mini view, and hidden; `F8` hides or\nrestores it outright. Both keys are shown on the board itself and are rebindable, and\n`/raceboard` works from chat. The board lives in [spz-spectate](#/modules) —\nsame audience, so it shares that resource rather than adding another.",
+   "source": null
+  },
+  "progression": {
+   "title": "Progression and rank",
+   "tagline": "XP, rank points, licences, records and rivals.",
+   "badges": [],
+   "body": "Every finished race feeds [spz-progression](#/spz-progression).\n\n| System | Meaning |\n|---|---|\n| **Rank (RP)** | `C-5` … `S-1`, derived from Rank Points. Display and prestige only |\n| **XP / level** | Reward for playing |\n| **Safety Rating (SR)** | Clean driving — incidents and contact push it down (daily caps) |\n| **iRating** | Relative pace against the field, zero-sum Elo; used for rivals |\n\n## Rank (ranking v3)\n\nRank is one number, **Rank Points**, looked up in a 20-rung table (C 0 / B 250 / A 1,150 /\nS 3,850 RP to enter; steps of 50 / 180 / 540 / 1,000 between sub-ranks). After each\n**rated** race (2+ players) each player gets one RP delta from their finishing percentile,\nthe field size, and the field's strength relative to them, plus small supports (clean race,\nstreak, perfect lap, track record). RP never drops below the floor of your current class, and\npositive RP is capped at +300 per day. There is no limit on field size.\n\n`license_tier` (`0 = C` … `3 = S`) is just the stored class letter, derived from RP and\nwritten through `spz-identity:UnlockLicense`. **Nothing gates cars, tracks or classes on it.**\n\n## Vehicle classes\n\nRace classes only — Coupes, Muscle, Sports Classics, Sports, Super, Open Wheel. Civilian,\nservice, utility and prop vehicles are not spawnable.\n\n## Rivals\n\nEach player is paired with the nearest player by iRating. Beating your rival's stored time\non a track pings both of you in game and on Discord. `/rival` shows yours.\n\n## Bonuses\n\n**Perfect lap** — purple in all three sectors of the same lap, in a race or a time trial,\ngrants flat XP and credits (`Config.PerfectLap`) with a notification, rank-up sting and\npost-fx flourish. It rewards the flawless lap, not merely the fast one.\n\nOther one-off rewards use the generic export:\n\n```lua\nexports['spz-progression']:GrantBonus(source, { xp = 250, credits = 500, reason = 'event' })\n```\n\n## Record crowns\n\nHolding a track's fastest stored line earns a gold crown on your nametag, rendered by\n`spz-nametag` from the `spz:records` statebag (with a count when you hold more than one).\nTaking a record broadcasts to everyone — \"X snatched the [track] record from Y\" — and logs\nto Discord. Crown counts refresh live for both the new holder and the dethroned one.\n\nIn-world record boards at configurable spots show a track's fastest-lap holders as floating\nscoreboards you walk up to and read — no menu.",
+   "source": null
+  },
+  "modules": {
+   "title": "Modules",
+   "tagline": "Every module in the beta, grouped by area.",
+   "badges": [],
+   "body": "Every module in the SPiceZ-Core beta. Each is its own resource and repository; the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe) installs them all.\n\n## Core\n\n| Module | Version | What it does |\n|---|---|---|\n| [spz-core](#/spz-core) | `1.14.0` | Framework bootstrap: sessions, routing buckets, permissions, theme and the database schema. |\n| [spz-identity](#/spz-identity) | `1.8.1` | Player profiles, licences, crews and vanity plates. |\n| [spz-spawn](#/spz-spawn) | `1.9.1` | Spawn flow: character creation, play menu and cinematic world entry. |\n| [spz-appearance](#/spz-appearance) | `1.0.2` | Freemode ped, personal outfits and crew outfits on top of fivem-appearance. |\n| [spz-loading](#/spz-loading) | `1.7.0` | Themed loading screen with real boot progress. |\n\n## Racing\n\n| Module | Version | What it does |\n|---|---|---|\n| [spz-races](#/spz-races) | `1.45.0` | The race engine: queue, vote, grid, warmup, checkpoints, timing and results. |\n| [spz-poll](#/spz-poll) | `1.6.0` | The track and car-class vote between races. |\n| [spz-raceUI](#/spz-raceUI) | `1.18.0` | Race HUD: countdown, standings, timing, intro cover, lobby pill and results. |\n| [spz-leaderboard](#/spz-leaderboard) | `1.6.0` | Leaderboard tablet: race results, standings, classes, records and activity. |\n| [spz-progression](#/spz-progression) | `1.1.1` | XP, safety rating, iRating and rank points. |\n| [spz-raceline](#/spz-raceline) | `1.7.0` | Records your best line per track and paints it on the road. |\n| [spz-speedcam](#/spz-speedcam) | `1.3.0` | Speed cameras around the map with personal and server records. |\n| [spz-spectate](#/spz-spectate) | `1.1.0` | Spectator mode and the live race board. |\n| [spz-replay](#/spz-replay) | `1.7.0` | Server-side race replays with broadcast cameras. |\n\n## Vehicles\n\n| Module | Version | What it does |\n|---|---|---|\n| [spz-vehicles](#/spz-vehicles) | `1.6.1` | Vehicle registry, classes, race spawns, upgrades and saved customisation. |\n| [spz-carspawner](#/spz-carspawner) | `1.5.0` | Freeroam car spawner. |\n| [spz-tunners](#/spz-tunners) | `1.2.3` | Keyboard-driven tuning and customisation menu. |\n| [spz-vehfunc](#/spz-vehfunc) | `1.0.4` | Indicators, hazards, headlight flash and horn taunts. |\n| [spz-speedometer](#/spz-speedometer) | `1.10.0` | Racing speedometer. |\n\n## Interface\n\n| Module | Version | What it does |\n|---|---|---|\n| [spz-pausemenu](#/spz-pausemenu) | `1.2.1` | Replaces the GTA pause menu. |\n| [spz-nametag](#/spz-nametag) | `1.2.0` | Nametags with rank, crew and record crowns. |\n| [spz-chat](#/spz-chat) | `1.9.0` | Global, crew and DM chat with command autocomplete. |\n| [spz-emotes](#/spz-emotes) | `1.0.0` | Emote menu: dances, gestures, poses, shared emotes, walk styles and moods. |\n\n## Social\n\n| Module | Version | What it does |\n|---|---|---|\n| [spz-crew](#/spz-crew) | `1.1.1` | Crew dashboard and crew radio. |\n| [spz-discord](#/spz-discord) | `1.2.0` | Discord race embeds, whitelist and role-based admin. |\n| [spz-rpc](#/spz-rpc) | `1.0.1` | Discord Rich Presence. |\n\n## Minigames\n\n| Module | Version | What it does |\n|---|---|---|\n| [spz-minigames](#/spz-minigames) | `1.0.1` | Minigame hub and the shared minigame HUD. |\n| [spz-colorrush](#/spz-colorrush) | `1.0.1` | Color Rush: reach the called colour before the rest drops away. |\n| [spz-cyclone](#/spz-cyclone) | `1.0.0` | Cyclone: a roaming tornado throws cars off the deck. |\n| [spz-bomb](#/spz-bomb) | `1.0.0` | Bomb Tag: pass the bomb before the fuse runs out. |\n| [spz-demolition](#/spz-demolition) | `1.0.0` | Demolition derby: last car running wins. |\n| [spz-pursuit](#/spz-pursuit) | `1.11.0` | Hot Pursuit: one robber, up to 10 cops and a PD chopper. |\n\n## Platform\n\n| Module | Version | What it does |\n|---|---|---|\n| [spz-admin](#/spz-admin) | `1.5.0` | Admin menu: players, spectate / ride along, buckets, noclip and dev tools. |\n| [spz-analytics](#/spz-analytics) | `1.2.0` | Analytics collector for Grafana. |\n| [spz-fpscap](#/spz-fpscap) | `1.0.0` | 60 FPS fairness cap. |\n| [spz-txrecipe](#/spz-txrecipe) | `-` | txAdmin recipe: a full SPiceZ-Core server in one deploy. |",
+   "source": null
+  },
+  "spz-core": {
+   "title": "spz-core",
+   "tagline": "Framework bootstrap: sessions, routing buckets, permissions, theme and the database schema.",
+   "badges": [
+    "v1.14.0"
+   ],
+   "body": "## Overview\n\nThe foundation every other module builds on. It owns player sessions, the routing-bucket manager, permissions, the shared UI theme, the radial menu and the **database schema** — every `.sql` file in `migrations/` is applied once on boot and recorded in `spz_migrations`, so no other module ships SQL. `SPZ:coreReady` fires only after migrations finish.\n\n## Features\n\n- Automatic schema migrations on boot (`migrations/`)\n- Routing-bucket registry used by races, minigames and spectate\n- Server-authoritative time and weather\n- Global player phasing (ghosting) outside contact modes\n- Radial menu (`Z`) built from whichever modules are running\n- Theme convars (`spz_theme_*`) shared by every SPiceZ UI\n- Rockstar Editor recording shortcuts\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `oxmysql` | third-party |\n| `ox_lib` | third-party |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-core` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-core\n```\n\n## Configuration\n\n- `client/config_sync.lua`\n- `config.lua`\n- `server/config.lua`\n\nSee the file for every option.\n\n## Commands\n\n| Command | Who | Description |\n|---|---|---|\n| `/discardclip` | player | Stop recording without saving |\n| `/editor` | player | Open the Rockstar Editor |\n| `/fix` | player | Repair the vehicle you are in |\n| `/menu` | player | Open the radial menu |\n| `/record` | player | Start recording a Rockstar Editor clip (again: stop and save) |\n| `/stoprecord` | player | Stop and save the clip |\n| `/time` | player | Local time preview |\n| `/weather` | player | Local weather preview |\n| `/freezetime` | admin | Freeze / unfreeze server time |\n| `/spz` | admin | `/spz <sub>` — framework diagnostics and hot reload |\n| `/spzbuckets` | admin | List routing buckets and who is in them |\n| `/synctime` | admin | Set server time |\n| `/syncweather` | admin | Set server weather |\n| `/tpm` | admin | Teleport to your waypoint, or to a player id |\n| `/keydebug` | dev | Show what GTA reports for a key binding |\n| `/phasing` | dev | Print collision/phasing state |\n\n## Exports\n\n| Export | Side |\n|---|---|\n| `AssignPlayerToBucket` | server |\n| `CreateBucket` | server |\n| `CreateSession` | server |\n| `DeleteBucket` | server |\n| `FadeHold` | client |\n| `FadeIn` | client |\n| `FadeOut` | client |\n| `FadeTransition` | client |\n| `GetAllSessions` | server |\n| `GetBucketPlayers` | server |\n| `GetBucketRegistry` | server |\n| `GetConfig` | client / server |\n| `GetPlayerBucket` | server |\n| `GetPlayerSession` | server |\n| `GetTheme` | client / server |\n| `GetVersion` | shared |\n| `HasPermission` | server |\n| `IsAdmin` | server |\n| `KeyFor` | client |\n| `KeyForControl` | client |\n| `PadLabel` | client |\n| `RefreshRadial` | client |\n| `RegisterBucket` | server |\n| `ReloadConfig` | server |\n| `ReloadTheme` | server |\n| `RemovePlayerFromBucket` | server |\n| `SetSyncedTime` | server |\n| `SetSyncedWeather` | server |\n| `StartTablet` | client |\n| `StopTablet` | client |\n| `UsingPad` | client |\n| `WaitForMigrations` | server |\n\n```lua\nexports[\"spz-core\"]:AssignPlayerToBucket(...)\n```",
+   "source": "https://github.com/SPiceZ21/spz-core"
+  },
+  "spz-identity": {
+   "title": "spz-identity",
+   "tagline": "Player profiles, licences, crews and vanity plates.",
+   "badges": [
+    "v1.8.1"
+   ],
+   "body": "## Overview\n\nCreates and caches each player's profile on join and exposes it to every other module through exports and statebags. Also owns driver licences (the C–S class letter), the crew backend and personal number plates.\n\n## Features\n\n- Profile created on first join, cached for the session\n- Licence class letter (C to S) derived from rank points\n- Crew create / join / leave backend (UI is spz-crew)\n- Personal vanity plates\n- Optional Discord linking\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n| `spz-core` | SPiceZ module |\n| `oxmysql` | third-party |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-identity` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-identity\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.\n\n## Commands\n\n| Command | Who | Description |\n|---|---|---|\n| `/plate` | player | Set your personal plate |\n| `/refreshdiscord` | player | Re-sync your Discord name/avatar (admins: for a player id) |\n\n## Exports\n\n| Export | Side |\n|---|---|\n| `AttachProfile` | server |\n| `CreateCrew` | server |\n| `GetClientProfile` | client |\n| `GetCrew` | server |\n| `GetCrewCooldownSeconds` | server |\n| `GetOnlineCrewMembers` | server |\n| `GetPlate` | server |\n| `GetPlatformName` | server |\n| `GetPlaytime` | server |\n| `GetProfile` | server |\n| `GetRankName` | server |\n| `GetSyncSubset` | server |\n| `JoinCrew` | server |\n| `LeaveCrew` | server |\n| `NormalisePlate` | server |\n| `PrepareProfile` | server |\n| `SetPlate` | server |\n| `UnlockLicense` | server |\n| `UpdateProfile` | server |\n\n```lua\nexports[\"spz-identity\"]:AttachProfile(...)\n```",
+   "source": "https://github.com/SPiceZ21/spz-identity"
+  },
+  "spz-spawn": {
+   "title": "spz-spawn",
+   "tagline": "Spawn flow: character creation, play menu and cinematic world entry.",
+   "badges": [
+    "v1.9.1"
+   ],
+   "body": "## Overview\n\nTakes the player from the loading screen to the world: new players go through character creation (fivem-appearance), everyone lands on the play menu, and the entry is covered by a transition so the world never pops in.\n\n## Features\n\n- First-join character creation\n- Play menu with cinematic camera\n- Loading-screen progress stages (with spz-loading)\n- Transition cover over every spawn\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `spawnmanager` | third-party |\n| `ox_lib` | third-party |\n| `spz-core` | SPiceZ module |\n| `spz-identity` | SPiceZ module |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-spawn` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-spawn\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.",
+   "source": "https://github.com/SPiceZ21/spz-spawn"
+  },
+  "spz-appearance": {
+   "title": "spz-appearance",
+   "tagline": "Freemode ped, personal outfits and crew outfits on top of fivem-appearance.",
+   "badges": [
+    "v1.0.2"
+   ],
+   "body": "## Overview\n\nApplies the right look to every player: their saved personal appearance, or their crew's outfit (clothing only) over their own face and hair. Opens the fivem-appearance editor for new characters and on demand.\n\n## Features\n\n- Personal appearance saved per player\n- Crew owner's outfit pushed to every member (clothes only)\n- Re-applied on spawn, crew change and resource restart\n- Customiser lock so nothing overwrites a look being edited\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n| `spz-core` | SPiceZ module |\n| `spz-identity` | SPiceZ module |\n| `fivem-appearance` | third-party |\n| `oxmysql` | third-party |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-appearance` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-appearance\n```\n\n## Commands\n\n| Command | Who | Description |\n|---|---|---|\n| `/appearance` | player | Open the character editor |\n| `/resetoutfit` | player | Drop your saved outfit (falls back to crew/default) |\n| `/saveoutfit` | player | Save your current outfit |\n\n## Exports\n\n| Export | Side |\n|---|---|\n| `IsCustomizing` | client |\n| `ReapplyMyOutfit` | client |\n\n```lua\nexports[\"spz-appearance\"]:IsCustomizing(...)\n```",
+   "source": "https://github.com/SPiceZ21/spz-appearance"
+  },
+  "spz-loading": {
+   "title": "spz-loading",
+   "tagline": "Themed loading screen with real boot progress.",
+   "badges": [
+    "v1.7.0"
+   ],
+   "body": "## Overview\n\nA minimal loading screen in the server theme. After the game loads it shows the second phase too — contacting the server, loading the profile, streaming the world — and owns taking the screen down, with a watchdog so it can never hang.\n\n## Features\n\n- Two-phase progress (engine load + SPZ boot stages)\n- Theme from `spz_theme_*` convars\n- Watchdog that reports which stage stalled\n- `spz-loading:finished` event so other UIs stay hidden until it is down\n\n## Requirements\n\nNone — runs on its own.\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-loading` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`:\n\n```cfg\nensure spz-loading\n```\n\n## Exports\n\n| Export | Side |\n|---|---|\n| `Finish` | client |\n| `IsFinished` | client |\n| `Stage` | client |\n\n```lua\nexports[\"spz-loading\"]:Finish(...)\n```",
+   "source": "https://github.com/SPiceZ21/spz-loading"
+  },
+  "spz-races": {
+   "title": "spz-races",
+   "tagline": "The race engine: queue, vote, grid, warmup, checkpoints, timing and results.",
+   "badges": [
+    "v1.45.0"
+   ],
+   "body": "## Overview\n\nRuns the whole race loop on the server. Players queue, vote on track and car class (spz-poll), spawn on a grid in a private bucket, free-drive a warmup, then race. Lap, sector and finish times are measured server-side. Also includes Time Trials, duels and **Track Studio** for building tracks in the world.\n\n## Features\n\n- Queue → vote → warmup → countdown → race → results cycle\n- Late join during warmup\n- Server-side lap / sector / finish timing\n- Road-following GPS route and 3D distance pills over the next gates\n- Rewind, flip and back-to-checkpoint recovery\n- Time Trials and 1v1 duels\n- Track Studio: drive the route and drop gates (`custom_tracks.json`)\n- Flag girl race start\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n| `spz-core` | SPiceZ module |\n| `spz-identity` | SPiceZ module |\n| `spz-vehicles` | SPiceZ module |\n| `oxmysql` | third-party |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-races` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-races\n```\n\n## Configuration\n\n- `config.lua`\n- `server/leaderboard/config.lua`\n\nSee the file for every option.\n\n## Commands\n\n| Command | Who | Description |\n|---|---|---|\n| `/duel` | player | `/duel <player> <track> <stake>` — challenge a player |\n| `/joinrace` | player | Join the race queue (also `E` in freeroam) |\n| `/leaverace` | player | Leave the queue / race |\n| `/quittt` | player | Quit the time trial |\n| `/srace` | player | Start a quick solo race |\n| `/timetrail` | player | Start a time trial |\n| `/clearstart` | admin | Remove a surveyed start line |\n| `/racehud` | admin | Re-read race HUD convars |\n| `/setstart` | admin | Survey a start line for a track |\n| `/startlines` | admin | List surveyed start lines |\n| `/checkgateprops` | dev | Check gate prop models resolve |\n| `/copdebug` | dev | Cop-chase debug overlay |\n| `/cpdebug` | dev | Draw checkpoint gates in 3D |\n| `/fixheadings` | dev | Recompute gate headings |\n| `/flagdrop` | dev | Preview the flag girl animation |\n| `/racesoundtest` | dev | Play the grid sounds |\n| `/wantedtest` | dev | Preview the wanted HUD |\n\n## Key binds\n\nRebindable in **Settings → Key Bindings → FiveM**.\n\n| Action | Default |\n|---|---|\n| Race: tune car during warmup | `Y` |\n| Race: back to last checkpoint | `F4` |\n| Race: flip car upright | `K` |\n| Race: Rewind Time | `B` |\n| Time Trial — Restart to Start | `BACK` |\n\n## Exports\n\n| Export | Side |\n|---|---|\n| `ConfirmRaceSpawn` | server |\n| `GetCheckpointDebug` | client |\n| `GetCurrentCP` | client |\n| `GetQueueCount` | server |\n| `GetRaceInfo` | server |\n| `GetRespawnPoint` | client |\n| `GetRewindCreditMs` | client |\n| `GetTTCpIndex` | client |\n| `HandlePlayerDisconnect` | server |\n| `IsInTimeTrial` | server |\n| `IsQueued` | server |\n| `IsRewinding` | client |\n| `IsTrackCreatorActive` | client |\n| `IsTrackEditorActive` | client |\n| `IsTrackStudioActive` | client |\n| `JoinQueue` | server |\n| `LeaveQueue` | server |\n| `MarkDNF` | server |\n| `SetActiveCheckpoint` | client |\n| `SetRaceState` | server |\n| `StartCheckpointVisuals` | client |\n| `StopCheckpointVisuals` | client |\n\n```lua\nexports[\"spz-races\"]:ConfirmRaceSpawn(...)\n```\n\n## Notes\n\n- Tracks built in Track Studio are stored in `data/custom_tracks.json`, not the database — back that file up.",
+   "source": "https://github.com/SPiceZ21/spz-races"
+  },
+  "spz-poll": {
+   "title": "spz-poll",
+   "tagline": "The track and car-class vote between races.",
+   "badges": [
+    "v1.6.0"
+   ],
+   "body": "## Overview\n\nShows the vote screen between races: three track cards with route previews and car-class options, live vote counts, re-roll votes and a countdown. Driven entirely by spz-races through exports.\n\n## Features\n\n- Track cards with route outline\n- Car-class voting\n- Re-roll votes\n- Live tallies\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `spz-core` | SPiceZ module |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-poll` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-poll\n```\n\n## Exports\n\n| Export | Side |\n|---|---|\n| `StartPoll` | client |\n| `StopPoll` | client |\n| `UpdatePoll` | client |\n\n```lua\nexports[\"spz-poll\"]:StartPoll(...)\n```",
+   "source": "https://github.com/SPiceZ21/spz-poll"
+  },
+  "spz-raceUI": {
+   "title": "spz-raceUI",
+   "tagline": "Race HUD: countdown, standings, timing, intro cover, lobby pill and results.",
+   "badges": [
+    "v1.18.0"
+   ],
+   "body": "## Overview\n\nEverything drawn during a race: the intro cover and briefing, countdown, lap/sector/position HUD, standings list, finish window, post-race stats, and the freeroam lobby pill (\"E JOIN RACE\" / \"JOIN WARMUP\").\n\n## Features\n\n- Race intro with sliced transition cover\n- Lap, sector and split deltas\n- Standings list (toggle `N`)\n- Freeroam lobby pill with join / warmup / queue states\n- Stays hidden until the loading screen is down\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `spz-core` | SPiceZ module |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-raceUI` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-raceUI\n```\n\n## Key binds\n\nRebindable in **Settings → Key Bindings → FiveM**.\n\n| Action | Default |\n|---|---|\n| Race: Toggle Standings List | `N` |\n| HUD: show / hide freeroam info | `PAGEDOWN` |\n\n## Exports\n\n| Export | Side |\n|---|---|\n| `HideAll` | client |\n| `HideFinishWindow` | client |\n| `HideRaceIntro` | client |\n| `HideRewind` | client |\n| `HideWarmup` | client |\n| `PlaySound` | client |\n| `ResetSectors` | client |\n| `SetKeyHints` | client |\n| `SetRaceOverlayVisible` | client |\n| `ShowCountdown` | client |\n| `ShowFastestLap` | client |\n| `ShowFinishWindow` | client |\n| `ShowFlourish` | client |\n| `ShowPostRaceStats` | client |\n| `ShowRaceIntro` | client |\n| `ShowSplitDelta` | client |\n| `ShowWarmup` | client |\n| `TT_Broadcast` | client |\n| `TT_Hide` | client |\n| `UpdateCPWaypoint` | client |\n| `UpdateLobby` | client |\n| `UpdateRaceOverlay` | client |\n| `UpdateRewind` | client |\n| `UpdateSector` | client |\n| `UpdateWanted` | client |\n\n```lua\nexports[\"spz-raceUI\"]:HideAll(...)\n```",
+   "source": "https://github.com/SPiceZ21/spz-raceUI"
+  },
+  "spz-leaderboard": {
+   "title": "spz-leaderboard",
+   "tagline": "Leaderboard tablet: race results, standings, classes, records and activity.",
+   "badges": [
+    "v1.6.0"
+   ],
+   "body": "## Overview\n\nA tablet UI opened with `F6`: the race you just finished first, then the archive, rank standings, per-class records and recent activity.\n\n## Features\n\n- Last race results, opened automatically after a race\n- Results archive\n- Standings and records per class\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n| `spz-core` | SPiceZ module |\n| `spz-races` | SPiceZ module |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-leaderboard` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-leaderboard\n```\n\n## Commands\n\n| Command | Who | Description |\n|---|---|---|\n| `/leaderboard` | player | Open the leaderboard |\n| `/raceresults` | player | Open the latest race results |\n| `/rankuptest` | dev | Preview the rank-up animation |\n\n## Key binds\n\nRebindable in **Settings → Key Bindings → FiveM**.\n\n| Action | Default |\n|---|---|\n| Race results / leaderboard | `F6` |\n\n## Exports\n\n| Export | Side |\n|---|---|\n| `OpenLastRaceResults` | client |\n\n```lua\nexports[\"spz-leaderboard\"]:OpenLastRaceResults(...)\n```",
+   "source": "https://github.com/SPiceZ21/spz-leaderboard"
+  },
+  "spz-progression": {
+   "title": "spz-progression",
+   "tagline": "XP, safety rating, iRating and rank points.",
+   "badges": [
+    "v1.1.1"
+   ],
+   "body": "## Overview\n\nTurns race results into progression: XP and levels, a safety rating, an iRating-style skill number and rank points that decide your rank tier. Also tracks rivals.\n\n## Features\n\n- XP and levels\n- Safety rating from incidents\n- iRating-style skill rating\n- Rank points and tiers\n- Rivals\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n| `spz-core` | SPiceZ module |\n| `spz-identity` | SPiceZ module |\n| `spz-races` | SPiceZ module |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-progression` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-progression\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.\n\n## Commands\n\n| Command | Who | Description |\n|---|---|---|\n| `/rank` | player | Show your rank |\n| `/rival` | player | Show your rival and the gap on your last track |\n\n## Exports\n\n| Export | Side |\n|---|---|\n| `AdminRankInfo` | server |\n| `AdminRankStats` | server |\n| `AdminRecentRaces` | server |\n| `AdminSetRP` | server |\n| `AdminVoidRace` | server |\n| `CalculateXP` | server |\n| `GrantBonus` | server |\n| `GrantFlatRP` | server |\n| `LevelFromXP` | server |\n| `XPRequired` | server |\n\n```lua\nexports[\"spz-progression\"]:AdminRankInfo(...)\n```",
+   "source": "https://github.com/SPiceZ21/spz-progression"
+  },
+  "spz-raceline": {
+   "title": "spz-raceline",
+   "tagline": "Records your best line per track and paints it on the road.",
+   "badges": [
+    "v1.7.0"
+   ],
+   "body": "## Overview\n\nEvery race and time-trial lap is recorded; your best lap's line is stored per track and drawn on the road as a ribbon (green throttle, red braking). In time trials it also replays as a ghost car.\n\n## Features\n\n- Automatic lap capture\n- Best-line ribbon on the road\n- Time-trial ghost car\n- Track record crowns on nametags\n- Track outlines for the vote screen\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `oxmysql` | third-party |\n| `ox_lib` | third-party |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-raceline` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-raceline\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.\n\n## Commands\n\n| Command | Who | Description |\n|---|---|---|\n| `/raceline` | player | Raceline options |\n| `/racelinepanel` | player | Open the raceline panel (`F3`) |\n| `/racelinetoggle` | player | Show / hide the line |\n| `/ghostinfo` | dev | Ghost replay diagnostics |\n| `/rlstatus` | dev | Recording / storage status |\n\n## Key binds\n\nRebindable in **Settings → Key Bindings → FiveM**.\n\n| Action | Default |\n|---|---|\n| Raceline: Toggle Display | _unbound_ |\n| Raceline: Control panel | `F3` |\n\n## Exports\n\n| Export | Side |\n|---|---|\n| `GetLineByPlayerId` | server |\n| `GetTrackOutline` | server |\n\n```lua\nexports[\"spz-raceline\"]:GetLineByPlayerId(...)\n```",
+   "source": "https://github.com/SPiceZ21/spz-raceline"
+  },
+  "spz-speedcam": {
+   "title": "spz-speedcam",
+   "tagline": "Speed cameras around the map with personal and server records.",
+   "badges": [
+    "v1.3.0"
+   ],
+   "body": "## Overview\n\nFixed speed cameras across the map. Drive through one fast to set your best; the fastest pass per camera is the server record.\n\n## Features\n\n- Camera network with blips\n- Personal bests and server records\n- Flash and readout on pass\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n| `spz-core` | SPiceZ module |\n| `spz-identity` | SPiceZ module |\n| `oxmysql` | third-party |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-speedcam` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-speedcam\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.\n\n## Key binds\n\nRebindable in **Settings → Key Bindings → FiveM**.\n\n| Action | Default |\n|---|---|\n| Speed camera records | `F2` |",
+   "source": "https://github.com/SPiceZ21/spz-speedcam"
+  },
+  "spz-spectate": {
+   "title": "spz-spectate",
+   "tagline": "Spectator mode and the live race board.",
+   "badges": [
+    "v1.1.0"
+   ],
+   "body": "## Overview\n\nLets any player spectate anyone online — including racers in private buckets — with a clean overlay of their live data, plus a live race board for following a race.\n\n## Features\n\n- Spectate any player, across routing buckets\n- Live position, lap, speed and car\n- Race board: full / mini / hidden\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n| `spz-core` | SPiceZ module |\n| `spz-races` | SPiceZ module |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-spectate` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-spectate\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.\n\n## Commands\n\n| Command | Who | Description |\n|---|---|---|\n| `/raceboard` | player | Cycle the race board |\n| `/raceboard_hide` | player | Hide / restore the race board |\n| `/spectate` | player | Toggle spectator mode |\n\n## Key binds\n\nRebindable in **Settings → Key Bindings → FiveM**.\n\n| Action | Default |\n|---|---|\n| Toggle spectator mode | _unbound_ |\n| Race board: cycle full / mini / hidden | `F9` |\n| Race board: hide or restore | `F11` |\n\n## Exports\n\n| Export | Side |\n|---|---|\n| `GetBoard` | server |\n| `IsSpectating` | client / server |\n\n```lua\nexports[\"spz-spectate\"]:GetBoard(...)\n```",
+   "source": "https://github.com/SPiceZ21/spz-spectate"
+  },
+  "spz-replay": {
+   "title": "spz-replay",
+   "tagline": "Server-side race replays with broadcast cameras.",
+   "badges": [
+    "v1.7.0"
+   ],
+   "body": "## Overview\n\nEvery race is recorded server-side, compressed into the database and can be played back with TV, chase, heli, bonnet, wheel and free cameras, driver switching and a clean record view.\n\n## Features\n\n- Automatic recording of every race\n- Compressed storage\n- Multiple camera modes and driver switching\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n| `oxmysql` | third-party |\n| `spz-core` | SPiceZ module |\n| `spz-races` | SPiceZ module |\n| `spz-vehicles` | SPiceZ module |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-replay` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-replay\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.\n\n## Exports\n\n| Export | Side |\n|---|---|\n| `WatchRace` | client |\n\n```lua\nexports[\"spz-replay\"]:WatchRace(...)\n```",
+   "source": "https://github.com/SPiceZ21/spz-replay"
+  },
+  "spz-vehicles": {
+   "title": "spz-vehicles",
+   "tagline": "Vehicle registry, classes, race spawns, upgrades and saved customisation.",
+   "badges": [
+    "v1.6.1"
+   ],
+   "body": "## Overview\n\nKnows every car the server offers and its class, spawns race and freeroam vehicles server-side, applies performance upgrades and each player's saved customisation. Race cars get a random chameleon paint.\n\n## Features\n\n- Car registry and class classification (incl. add-on cars)\n- Server-side race spawns\n- Saved customisation per player and car\n- Vanity plates on every car\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n| `spz-core` | SPiceZ module |\n| `spz-identity` | SPiceZ module |\n| `oxmysql` | third-party |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-vehicles` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-vehicles\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.\n\n## Commands\n\n| Command | Who | Description |\n|---|---|---|\n| `/resetcustom` | player | Reset it |\n| `/savecustom` | player | Save the current car's customisation |\n| `/reclassify` | admin | Recompute car classes |\n| `/spzaddons` | admin | List add-on cars |\n| `/spzaddonscan` | admin | Scan for add-on cars |\n| `/vehcheck` | admin | Inspect the car you are in |\n\n## Exports\n\n| Export | Side |\n|---|---|\n| `DespawnVehicle` | server |\n| `GetAddonRaceClasses` | server |\n| `GetAllPollOptions` | server |\n| `GetClassMeta` | server / shared |\n| `GetClassification` | server |\n| `GetPlayerVehicle` | server |\n| `GetPollPool` | server |\n| `GetRaceClasses` | server |\n| `GetVehicleData` | server |\n| `GetVehicleRegistry` | server |\n| `IsRegistered` | server |\n| `LoadCustomization` | server |\n| `SpawnRaceVehicle` | server |\n| `SpawnVehicle` | server |\n| `UnlockRaceVehicle` | server |\n\n```lua\nexports[\"spz-vehicles\"]:DespawnVehicle(...)\n```",
+   "source": "https://github.com/SPiceZ21/spz-vehicles"
+  },
+  "spz-carspawner": {
+   "title": "spz-carspawner",
+   "tagline": "Freeroam car spawner.",
+   "badges": [
+    "v1.5.0"
+   ],
+   "body": "## Overview\n\nOpens a searchable garage (`F5`) with every car, filtered by class, including add-ons. Freeroam only.\n\n## Features\n\n- Search and class filter\n- Add-on cars included\n- `/car <model>` to spawn directly\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n| `spz-vehicles` | SPiceZ module |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-carspawner` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-carspawner\n```\n\n## Commands\n\n| Command | Who | Description |\n|---|---|---|\n| `/car` | player | Open the spawner, or `/car <model>` |\n| `/dv` | player | Delete your vehicle |\n\n## Key binds\n\nRebindable in **Settings → Key Bindings → FiveM**.\n\n| Action | Default |\n|---|---|\n| Open Car Spawner | `F5` |",
+   "source": "https://github.com/SPiceZ21/spz-carspawner"
+  },
+  "spz-tunners": {
+   "title": "spz-tunners",
+   "tagline": "Keyboard-driven tuning and customisation menu.",
+   "badges": [
+    "v1.2.3"
+   ],
+   "body": "## Overview\n\nA full tuning menu built on ox_lib: performance parts, body parts, paint (incl. chameleon), wheels, neon, liveries. Used in freeroam, in race warmup (`Y`) and by Hot Pursuit's car setup.\n\n## Features\n\n- Performance and cosmetic parts\n- Chameleon paints\n- Saved and re-applied by spz-vehicles\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-tunners` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-tunners\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.\n\n## Commands\n\n| Command | Who | Description |\n|---|---|---|\n| `/customs` | player | Open customs |\n| `/save_customs` | player | Save the current setup |\n| `/tune` | player | Open the tuner |\n\n## Exports\n\n| Export | Side |\n|---|---|\n| `ApplyVehicleMods` | client |\n| `GetVehicleMods` | client |\n| `OpenTunerMenu` | client |\n\n```lua\nexports[\"spz-tunners\"]:ApplyVehicleMods(...)\n```",
+   "source": "https://github.com/SPiceZ21/spz-tunners"
+  },
+  "spz-vehfunc": {
+   "title": "spz-vehfunc",
+   "tagline": "Indicators, hazards, headlight flash and horn taunts.",
+   "badges": [
+    "v1.0.4"
+   ],
+   "body": "## Overview\n\nSmall driving quality-of-life functions: turn signals, hazards, headlight flash, a horn taunt and an idle camera.\n\n## Features\n\n- Indicators and hazards\n- Headlight flash\n- Horn taunt\n- Idle camera\n\n## Requirements\n\nNone — runs on its own.\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-vehfunc` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`:\n\n```cfg\nensure spz-vehfunc\n```\n\n## Commands\n\n| Command | Who | Description |\n|---|---|---|\n| `/idlecam` | player | Toggle the idle camera |\n\n## Key binds\n\nRebindable in **Settings → Key Bindings → FiveM**.\n\n| Action | Default |\n|---|---|\n| Left Indicator | `LEFT` |\n| Right Indicator | `RIGHT` |\n| Hazard Lights | `J` |\n| Flash Headlights | `L` |\n| Horn Taunt (beep + flash) | `G` |",
+   "source": "https://github.com/SPiceZ21/spz-vehfunc"
+  },
+  "spz-speedometer": {
+   "title": "spz-speedometer",
+   "tagline": "Racing speedometer.",
+   "badges": [
+    "v1.10.0"
+   ],
+   "body": "## Overview\n\nA themed racing speedometer: speed, gear, RPM and rewind / boost meters during races.\n\n## Features\n\n- Speed, gear and RPM\n- Rewind credit and boost meters\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n| `spz-core` | SPiceZ module |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-speedometer` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-speedometer\n```\n\n## Exports\n\n| Export | Side |\n|---|---|\n| `Demo` | client |\n| `SetHidden` | client |\n| `SetRewindCredit` | client |\n| `SetSideBoost` | client |\n\n```lua\nexports[\"spz-speedometer\"]:Demo(...)\n```",
+   "source": "https://github.com/SPiceZ21/spz-speedometer"
+  },
+  "spz-pausemenu": {
+   "title": "spz-pausemenu",
+   "tagline": "Replaces the GTA pause menu.",
+   "badges": [
+    "v1.2.1"
+   ],
+   "body": "## Overview\n\n`Esc` opens a SPiceZ pause menu: map, teleport to hub, leave the current queue / race / minigame, settings and quick tiles for the main screens.\n\n## Features\n\n- Map and settings shortcuts\n- Leave race / queue / minigame\n- Quick tiles for spawner, leaderboard, crew, appearance\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n| `spz-core` | SPiceZ module |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-pausemenu` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-pausemenu\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.\n\n## Exports\n\n| Export | Side |\n|---|---|\n| `Close` | client |\n| `IsOpen` | client |\n| `Open` | client |\n\n```lua\nexports[\"spz-pausemenu\"]:Close(...)\n```",
+   "source": "https://github.com/SPiceZ21/spz-pausemenu"
+  },
+  "spz-nametag": {
+   "title": "spz-nametag",
+   "tagline": "Nametags with rank, crew and record crowns.",
+   "badges": [
+    "v1.2.0"
+   ],
+   "body": "## Overview\n\nDraws a nametag over nearby players with their name, rank, crew and a crown if they hold a track record.\n\n## Features\n\n- Rank and crew tags\n- Record crowns\n- Distance fade\n\n## Requirements\n\nNone — runs on its own.\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-nametag` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`:\n\n```cfg\nensure spz-nametag\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.\n\n## Commands\n\n| Command | Who | Description |\n|---|---|---|\n| `/syncnametags` | dev | Force a nametag resync |\n\n## Key binds\n\nRebindable in **Settings → Key Bindings → FiveM**.\n\n| Action | Default |\n|---|---|\n| Toggle player nametags | `F10` |",
+   "source": "https://github.com/SPiceZ21/spz-nametag"
+  },
+  "spz-chat": {
+   "title": "spz-chat",
+   "tagline": "Global, crew and DM chat with command autocomplete.",
+   "badges": [
+    "v1.9.0"
+   ],
+   "body": "## Overview\n\nReplaces the default chat. `T` opens it; messages go to global, crew or direct channels, and slash commands autocomplete. Closes itself whenever the player is teleported or a race / minigame takes over.\n\n## Features\n\n- Global, crew and DM channels\n- Command autocomplete\n- Hidden during the loading screen and spawn menu\n- Auto-closes on teleports and mode changes\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n| `spz-core` | SPiceZ module |\n| `spz-identity` | SPiceZ module |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-chat` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-chat\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.\n\n## Commands\n\n| Command | Who | Description |\n|---|---|---|\n| `/help` | player | List every server feature and its key |\n\n## Key binds\n\nRebindable in **Settings → Key Bindings → FiveM**.\n\n| Action | Default |\n|---|---|\n| Open chat | `t` |\n\n## Exports\n\n| Export | Side |\n|---|---|\n| `Close` | client |\n| `IsOpen` | client |\n\n```lua\nexports[\"spz-chat\"]:Close(...)\n```",
+   "source": "https://github.com/SPiceZ21/spz-chat"
+  },
+  "spz-emotes": {
+   "title": "spz-emotes",
+   "tagline": "Emote menu: dances, gestures, poses, shared emotes, walk styles and moods.",
+   "badges": [
+    "v1.0.0"
+   ],
+   "body": "## Overview\n\n`O` opens an emote menu with search, categories, favourites and animated previews. `/e <name>` plays one directly, `X` stops it. Shared emotes (handshake, hug, high five) ask the nearest player to accept.\n\n## Features\n\n- ~100 base-game emotes\n- Animated previews\n- Favourites\n- Shared two-player emotes\n- Walk styles and moods that persist\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n| `spz-core` | SPiceZ module |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-emotes` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-emotes\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.\n\n## Commands\n\n| Command | Who | Description |\n|---|---|---|\n| `/e` | player | `/e <name>` play an emote, `/e` stop |\n| `/emotes` | player | Open the menu |\n\n## Key binds\n\nRebindable in **Settings → Key Bindings → FiveM**.\n\n| Action | Default |\n|---|---|\n| Emotes: open menu | `O` |\n| Emotes: stop emote | `X` |\n\n## Exports\n\n| Export | Side |\n|---|---|\n| `OpenMenu` | client |\n| `Play` | client |\n| `Stop` | client |\n\n```lua\nexports[\"spz-emotes\"]:OpenMenu(...)\n```",
+   "source": "https://github.com/SPiceZ21/spz-emotes"
+  },
+  "spz-crew": {
+   "title": "spz-crew",
+   "tagline": "Crew dashboard and crew radio.",
+   "badges": [
+    "v1.1.1"
+   ],
+   "body": "## Overview\n\nA dashboard to create, browse and join crews, manage the roster, kick and disband, plus a crew voice radio (pma-voice).\n\n## Features\n\n- Create / browse / join crews\n- Roster management\n- Crew radio\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n| `oxmysql` | third-party |\n| `spz-core` | SPiceZ module |\n| `spz-identity` | SPiceZ module |\n| `pma-voice` | third-party |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-crew` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-crew\n```\n\n## Commands\n\n| Command | Who | Description |\n|---|---|---|\n| `/crew` | player | Open the crew dashboard |\n| `/crewradio` | player | Toggle crew radio |\n\n## Key binds\n\nRebindable in **Settings → Key Bindings → FiveM**.\n\n| Action | Default |\n|---|---|\n| Open crew dashboard | _unbound_ |\n| Toggle crew radio | _unbound_ |",
+   "source": "https://github.com/SPiceZ21/spz-crew"
+  },
+  "spz-discord": {
+   "title": "spz-discord",
+   "tagline": "Discord race embeds, whitelist and role-based admin.",
+   "badges": [
+    "v1.2.0"
+   ],
+   "body": "## Overview\n\nPosts race results to Discord, can whitelist by guild role and grants admin by Discord role.\n\n## Features\n\n- Race result embeds\n- Guild-role whitelist\n- Role-based admin mode\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `spz-core` | SPiceZ module |\n| `spz-races` | SPiceZ module |\n| `oxmysql` | third-party |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-discord` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-discord\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.\n\n## Commands\n\n| Command | Who | Description |\n|---|---|---|\n| `/dc_leaderboard` | admin | Post the leaderboard to Discord |\n\n## Exports\n\n| Export | Side |\n|---|---|\n| `IsAdminMode` | server |\n\n```lua\nexports[\"spz-discord\"]:IsAdminMode(...)\n```",
+   "source": "https://github.com/SPiceZ21/spz-discord"
+  },
+  "spz-rpc": {
+   "title": "spz-rpc",
+   "tagline": "Discord Rich Presence.",
+   "badges": [
+    "v1.0.1"
+   ],
+   "body": "## Overview\n\nShows live status in the player's Discord profile: racing or freeroam, position, class and track.\n\n## Features\n\n- Live race status\n- Track and class\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n| `spz-core` | SPiceZ module |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-rpc` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-rpc\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.",
+   "source": "https://github.com/SPiceZ21/spz-rpc"
+  },
+  "spz-minigames": {
+   "title": "spz-minigames",
+   "tagline": "Minigame hub and the shared minigame HUD.",
+   "badges": [
+    "v1.0.1"
+   ],
+   "body": "## Overview\n\nOne menu (`F7`, or the NPCs at the hub) to queue, create rooms, invite and start every minigame, plus the in-game HUD they all draw with.\n\n## Features\n\n- Hub for Color Rush, Cyclone, Bomb Tag, Demolition and Hot Pursuit\n- Rooms, invites and quick join\n- Shared minigame HUD\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-minigames` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-minigames\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.\n\n## Commands\n\n| Command | Who | Description |\n|---|---|---|\n| `/mgkey` | dev | Show the hub key binding |\n\n## Key binds\n\nRebindable in **Settings → Key Bindings → FiveM**.\n\n| Action | Default |\n|---|---|\n| Open the minigame hub | `F7` |\n\n## Exports\n\n| Export | Side |\n|---|---|\n| `Flash` | client |\n| `HubKey` | client |\n| `Hud` | client |\n| `OpenHub` | client |\n| `ReturnPoint` | client |\n| `Shard` | client |\n\n```lua\nexports[\"spz-minigames\"]:Flash(...)\n```",
+   "source": "https://github.com/SPiceZ21/spz-minigames"
+  },
+  "spz-colorrush": {
+   "title": "spz-colorrush",
+   "tagline": "Color Rush: reach the called colour before the rest drops away.",
+   "badges": [
+    "v1.0.1"
+   ],
+   "body": "## Overview\n\nA huge multicoloured platform in the sky. A colour is called, everyone drives to it, every other colour despawns. The grid shrinks each wave until one car is left. Each round draws a random car category.\n\n## Features\n\n- Waves with shrinking timers\n- One jump per wave\n- Random car category per round\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n| `spz-minigames` | SPiceZ module |\n| `oxmysql` | third-party |\n| `spz-core` | SPiceZ module |\n| `spz-identity` | SPiceZ module |\n| `spz-progression` | SPiceZ module |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-colorrush` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-colorrush\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.\n\n## Key binds\n\nRebindable in **Settings → Key Bindings → FiveM**.\n\n| Action | Default |\n|---|---|\n| Color Rush: car jump (once per wave) | `E` |",
+   "source": "https://github.com/SPiceZ21/spz-colorrush"
+  },
+  "spz-cyclone": {
+   "title": "spz-cyclone",
+   "tagline": "Cyclone: a roaming tornado throws cars off the deck.",
+   "badges": [
+    "v1.0.0"
+   ],
+   "body": "## Overview\n\nEveryone drives on one big deck in the sky while a cyclone roams it, lifting cars and throwing them off. Last car standing wins the round.\n\n## Features\n\n- Roaming, chasing cyclone\n- Multi-round matches\n- Random car category per round\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n| `oxmysql` | third-party |\n| `spz-core` | SPiceZ module |\n| `spz-identity` | SPiceZ module |\n| `spz-progression` | SPiceZ module |\n| `spz-minigames` | SPiceZ module |\n| `spz-colorrush` | SPiceZ module |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-cyclone` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-cyclone\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.",
+   "source": "https://github.com/SPiceZ21/spz-cyclone"
+  },
+  "spz-bomb": {
+   "title": "spz-bomb",
+   "tagline": "Bomb Tag: pass the bomb before the fuse runs out.",
+   "badges": [
+    "v1.0.0"
+   ],
+   "body": "## Overview\n\nThe bomb is handed to a random car each wave; drive through another car to pass it. Whoever holds it when the fuse runs out is out. Everyone gets one jump and one boost per wave.\n\n## Features\n\n- Waves with shrinking fuses\n- One jump and one 2 s boost per wave\n- Random car category per round\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n| `spz-minigames` | SPiceZ module |\n| `oxmysql` | third-party |\n| `spz-core` | SPiceZ module |\n| `spz-identity` | SPiceZ module |\n| `iak_demolition` | third-party |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-bomb` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-bomb\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.\n\n## Key binds\n\nRebindable in **Settings → Key Bindings → FiveM**.\n\n| Action | Default |\n|---|---|\n| Bomb Tag: car jump (once per wave) | `E` |\n| Bomb Tag: boost (once per wave) | `LSHIFT` |\n\n## Notes\n\n- Requires the `iak_demolition` arena map (third-party, not included).",
+   "source": "https://github.com/SPiceZ21/spz-bomb"
+  },
+  "spz-demolition": {
+   "title": "spz-demolition",
+   "tagline": "Demolition derby: last car running wins.",
+   "badges": [
+    "v1.0.0"
+   ],
+   "body": "## Overview\n\nA destruction derby in the demolition bowl with real damage.\n\n## Features\n\n- Real vehicle damage\n- Last car running wins\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n| `spz-minigames` | SPiceZ module |\n| `oxmysql` | third-party |\n| `spz-core` | SPiceZ module |\n| `spz-identity` | SPiceZ module |\n| `iak_demolition` | third-party |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-demolition` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-demolition\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.\n\n## Commands\n\n| Command | Who | Description |\n|---|---|---|\n| `/dmwhere` | dev | Print arena position info |\n\n## Notes\n\n- Requires the `iak_demolition` arena map (third-party, not included).",
+   "source": "https://github.com/SPiceZ21/spz-demolition"
+  },
+  "spz-pursuit": {
+   "title": "spz-pursuit",
+   "tagline": "Hot Pursuit: one robber, up to 10 cops and a PD chopper.",
+   "badges": [
+    "v1.11.0"
+   ],
+   "body": "## Overview\n\nA host opens a room and players pick roles, cars and tuner setups. The robber breaks out of Pacific Standard, police set up, then chase; stop the robber and hold `E` to bust. The robber wins by surviving the timer.\n\n## Features\n\n- Rooms with roles: robber, 1–10 cops, PD chopper\n- Per-role car and tuner setup\n- Server-side bust meter\n- Robber car in a random chameleon paint\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n| `spz-minigames` | SPiceZ module |\n| `spz-core` | SPiceZ module |\n| `spz-identity` | SPiceZ module |\n| `spz-tunners` | SPiceZ module |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-pursuit` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-pursuit\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.\n\n## Commands\n\n| Command | Who | Description |\n|---|---|---|\n| `/pursuit` | player | Open the Hot Pursuit room menu |\n\n## Key binds\n\nRebindable in **Settings → Key Bindings → FiveM**.\n\n| Action | Default |\n|---|---|\n| Hot Pursuit room menu | _unbound_ |",
+   "source": "https://github.com/SPiceZ21/spz-pursuit"
+  },
+  "spz-admin": {
+   "title": "spz-admin",
+   "tagline": "Admin menu: players, spectate / ride along, buckets, noclip and dev tools.",
+   "badges": [
+    "v1.5.0"
+   ],
+   "body": "## Overview\n\nAn ox_lib admin menu (`F1`) for player management, spectating or riding along with anyone in any bucket, a bucket browser, self tools, noclip and dev helpers.\n\n## Features\n\n- Player management\n- Spectate / ride along across buckets\n- Bucket browser\n- Noclip\n- Coordinate and entity tools\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `ox_lib` | third-party |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-admin` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-admin\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.\n\n## Commands\n\n| Command | Who | Description |\n|---|---|---|\n| `/admin` | admin | Open the admin menu |\n| `/noclip` | admin | Toggle noclip |\n| `/revive` | admin | `/revive [id]` |\n| `/ride` | admin | `/ride <id>` ride along |\n| `/spec` | admin | `/spec <id>` spectate a player |\n| `/carcode` | dev | Copy your car's spawn code |\n| `/heading` | dev | Copy your heading |\n| `/vec3` | dev | Copy your coords |\n| `/vec4` | dev | Copy your coords + heading |\n\n## Key binds\n\nRebindable in **Settings → Key Bindings → FiveM**.\n\n| Action | Default |\n|---|---|\n| Admin: open menu | `F1` |\n| Admin: toggle noclip | _unbound_ |\n\n## Exports\n\n| Export | Side |\n|---|---|\n| `IsAdmin` | server |\n\n```lua\nexports[\"spz-admin\"]:IsAdmin(...)\n```",
+   "source": "https://github.com/SPiceZ21/spz-admin"
+  },
+  "spz-analytics": {
+   "title": "spz-analytics",
+   "tagline": "Analytics collector for Grafana.",
+   "badges": [
+    "v1.2.0"
+   ],
+   "body": "## Overview\n\nWrites sessions, activity per mode, the race funnel, laps, vehicle and feature usage, daily stats and per-minute server snapshots to the database in batches, ready for Grafana dashboards.\n\n## Features\n\n- Batched writes\n- Per-minute server snapshots\n- Race funnel and feature usage\n\n## Requirements\n\n| Resource | Type |\n|---|---|\n| `oxmysql` | third-party |\n| `spz-core` | SPiceZ module |\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-analytics` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`, after its requirements:\n\n```cfg\nensure spz-analytics\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.\n\n## Exports\n\n| Export | Side |\n|---|---|\n| `AdminAction` | server |\n| `Event` | server |\n| `Reject` | server |\n| `Track` | server |\n\n```lua\nexports[\"spz-analytics\"]:AdminAction(...)\n```",
+   "source": "https://github.com/SPiceZ21/spz-analytics"
+  },
+  "spz-fpscap": {
+   "title": "spz-fpscap",
+   "tagline": "60 FPS fairness cap.",
+   "badges": [
+    "v1.0.0"
+   ],
+   "body": "## Overview\n\nDetects players running above 60 FPS and blocks them until they cap it, so physics behaves the same for everyone.\n\n## Features\n\n- FPS detection\n- Blocking prompt until capped\n\n## Requirements\n\nNone — runs on its own.\n\n## Installation\n\nIncluded in the [txAdmin recipe](https://github.com/SPiceZ21/spz-txrecipe). Manual install:\n\n1. Download `spz-fpscap` from GitHub (latest release, or the repository) into your `resources` folder.\n2. Add to `server.cfg`:\n\n```cfg\nensure spz-fpscap\n```\n\n## Configuration\n\n- `config.lua`\n\nSee the file for every option.",
+   "source": "https://github.com/SPiceZ21/spz-fpscap"
+  },
+  "spz-txrecipe": {
+   "title": "spz-txrecipe",
+   "tagline": "txAdmin recipe: a full SPiceZ-Core server in one deploy.",
+   "badges": [],
+   "body": "## Overview\n\nA txAdmin recipe that installs every dependency and SPZ module, and ships a ready `server.cfg` and `permissions.cfg`. The schema builds itself on first boot.\n\n## Features\n\n- One-click txAdmin deploy\n- Latest release of every module\n- Ready server.cfg\n\n## Quick start\n\n1. txAdmin → **Server Setup** → **Remote URL Template**.\n2. Paste:\n   ```\n   https://raw.githubusercontent.com/SPiceZ21/spz-txrecipe/main/spz-recipe.yaml\n   ```\n3. Enter the server name, licence key and database connection.\n4. Let it run, then start the server. The database schema builds itself on first boot.\n\n## Server requirements\n\n| Requirement | Notes |\n|---|---|\n| FXServer artifact | Build `27926` or newer |\n| Game build | `sv_enforceGameBuild 3407` (set in the generated `server.cfg`) |\n| MySQL / MariaDB | A running instance |\n| FiveM licence key | [keymaster.fivem.net](https://keymaster.fivem.net/) |\n\n## What it installs\n\n- **Dependencies:** `oxmysql`, `ox_lib`, `fivem-appearance` (+ thumbnail pack), `pma-voice`, `screenshot-basic`, `screencapture`, `bob74_ipl`, `vMenu`.\n- **SPiceZ modules:** every module of the beta, into `resources/[spz]/`, in dependency order.\n- **Configs:** `server.cfg` (load order, `sv_stateBagStrictMode`, ACE defaults) and `permissions.cfg`.\n\n## Contents\n\n| File | Purpose |\n|---|---|\n| `spz-recipe.yaml` | The txAdmin recipe |\n| `server.cfg` | Server config with the full load order |\n| `permissions.cfg` | ACE permission defaults |",
+   "source": "https://github.com/SPiceZ21/spz-txrecipe"
+  },
+  "keybinds": {
+   "title": "Keybinds",
+   "tagline": "Every default key, who owns it, and what is free.",
+   "badges": [],
+   "body": "Every default key binding on the server, in one table. **Check this file before\nclaiming a key**, and update it in the same change that claims one.\n\nThis exists because nothing listed what was taken, and four collisions grew out\nof that: two commands on `F5`, two on `F7`, the race board on FiveM's console\nkey, the standings toggle on ox_lib's radial key, the flip-car key on ox_lib's\nprogress-cancel key, and hazards on GTA's own headlights key. Every one of them\nfired both actions at once, which reads as \"the key does something weird\"\nrather than as a conflict.\n\nAll of these are **defaults**. Players rebind them in *Settings → Key Bindings*,\nand FiveM offers no way to read a live binding back — which is why any HUD that\nprints a key reads the same constant the mapping was registered with, rather\nthan guessing.\n\n## Claimed\n\n| Key | Action | Resource | Registered in |\n| --- | --- | --- | --- |\n| `F1` | Admin menu (ace `spz.admin`) | spz-admin | `config.lua` → `Config.MenuKey`, used by `client/menu.lua` |\n| `F2` | Speed camera records | spz-speedcam | `config.lua` → `Config.RecordsKey` |\n| `F2` | Speed camera records | spz-speedcam | `config.lua` → `Config.RecordsKey` |\n| `F2` | Speed camera records | spz-speedcam | `config.lua` → `Config.RecordsKey` |\n| `F3` | Raceline: control panel | spz-raceline | `client/panel.lua` |\n| `F4` | Race: back to last checkpoint | spz-races | `config.lua` → `Config.RecoverKey`, used by `client/recover.lua` |\n| `F5` | Open car spawner | spz-carspawner | `client/main.lua` |\n| `F6` | Race results / leaderboard | spz-leaderboard | `client/main.lua` |\n| `F7` | Open the minigame hub (mapping command `minigames_hub`) | spz-minigames | `config.lua` → `Config.Key` (speed camera records moved to F2) |\n| `F9` | Race board: cycle full / mini / hidden | spz-spectate | `config.lua` → `Config.Board.keys.cycle` |\n| `F10` | Toggle player nametags | spz-nametag | `config.lua` → `Config.Keybind` |\n| `F11` | Race board: hide or restore | spz-spectate | `config.lua` → `Config.Board.keys.hide` |\n| `T` | Open chat | spz-chat | `config.lua` → `Config.Keybind` |\n| `B` | Race: rewind time (hold) | spz-races | `config.lua` → `Config.Rewind.key` |\n| `K` | Race: flip car upright | spz-races | `client/recover.lua` |\n| `Y` | Race: tune car during warmup (only while in a race warmup) | spz-races | `client/nui_bridge.lua` |\n| `O` | Open the emote menu | spz-emotes | `config.lua` → `Config.MenuKey` |\n| `O` | Open the emote menu | spz-emotes | `config.lua` → `Config.MenuKey` |\n| `O` | Open the emote menu | spz-emotes | `config.lua` → `Config.MenuKey` |\n| `N` | Race: toggle standings list | spz-raceUI | `client/main.lua` |\n| `J` | Hazard lights | spz-vehfunc | `client/main.lua` |\n| `L` | Flash headlights (hold) | spz-vehfunc | `client/main.lua` |\n| `G` | Horn taunt | spz-vehfunc | `client/taunts.lua` |\n| `←` / `→` | Left / right indicator | spz-vehfunc | `client/main.lua` |\n| `BACKSPACE` | Time trial: restart to start | spz-races | `client/timetrail.lua` |\n\n## Claimed by ox_lib\n\nNot ours, and not to be taken. Rebinding them means editing a vendored library,\nwhich is undone by the next ox_lib update.\n\n| Key | Action |\n| --- | --- |\n| `Z` | Radial menu (carries the raceline / ghost controls) |\n| `X` | Cancel the progress bar — also stops an emote (spz-emotes `Config.CancelKey`); the two never apply at once |\n\n## Reserved by FiveM / GTA\n\n| Key | Owner |\n| --- | --- |\n| `F8` | FiveM console |\n| `H` | GTA: headlights |\n| `E` | GTA: horn |\n| `ESC` | Pause menu |\n\n## Registered with no default\n\nDeliberately unbound — the command works, and a player who wants the key binds\nit themselves. Reach for this list before inventing a new default.\n\n| Command | Action | Resource |\n| --- | --- | --- |\n| `crew` | Open crew dashboard | spz-crew |\n| `crewradio` | Toggle crew radio | spz-crew |\n| `pursuitmenu` | Hot Pursuit queue menu | spz-pursuit |\n| `spectate` | Toggle spectator mode | spz-spectate |\n| `srace` | Admin: start a race with a chosen track + car (ox_lib menu, skips the poll) | spz-races |\n| `replays` | Race replay browser (while watching: SPACE play, arrows seek/speed, Q/E driver, C camera, H hide UI, B Rockstar Editor rec/stop, G open Rockstar Editor, TAB mouse, BACKSPACE exit) | spz-replay |\n| `racelinetoggle` | Raceline: toggle display | spz-raceline |\n| `noclip` | Admin: toggle noclip | spz-admin |\n\n## Free\n\n`M`, `F12`, `C`, `,`, `.`\n\n## Mode-only keys\n\nOnly active inside one tool or mode, so they may reuse a key that is taken\nelsewhere — but never one that would fire the other action at the same time.\n\n| Key | Action | Resource |\n| --- | --- | --- |\n| `ENTER` / `SHIFT+ENTER` / `DEL` / `↑↓←→` / `PGUP` `PGDN` / `F9` / `F10` / `ESC` | Track Studio: drop gate / save / remove last / shape gate / laps / circuit-sprint / controls / discard | spz-races `client/trackstudio.lua` |\n| `SPACE` `←` `→` `↑` `↓` `Q` `E` `C` `H` `B` `G` `TAB` `BACKSPACE` | Replay while watching (all game input disabled) | spz-replay `client/main.lua` |\n| `E` | Color Rush / Bomb Tag: car jump (once per wave) | spz-colorrush, spz-bomb |\n| `LSHIFT` | Bomb Tag: boost (once per wave) | spz-bomb |\n\nController defaults (`PAD_DIGITALBUTTON`) are registered next to most of these;\nsee the resource for the button.\n\n## Not in this registry\n\nRoughly forty call sites poll controls directly with\n`IsControlJustPressed` / `IsDisabledControlJustPressed` (menu navigation,\neditor and creator hotkeys, spectator camera). Those bypass\n`RegisterKeyMapping` entirely: they cannot be rebound, they do not appear in\nFiveM's key settings, and they are checked against GTA control IDs rather than\nkey names. They are not tracked here yet.",
+   "source": null
+  },
+  "commands": {
+   "title": "Commands",
+   "tagline": "Every chat command, by who can use it.",
+   "badges": [],
+   "body": "Every chat command in the beta. **Who:** `player` — anyone; `admin` — needs the module's ACE / admin; `dev` — diagnostics.\n\n## Player\n\n| Command | Module | Description |\n|---|---|---|\n| `/appearance` | [spz-appearance](#/spz-appearance) | Open the character editor |\n| `/car` | [spz-carspawner](#/spz-carspawner) | Open the spawner, or `/car <model>` |\n| `/crew` | [spz-crew](#/spz-crew) | Open the crew dashboard |\n| `/crewradio` | [spz-crew](#/spz-crew) | Toggle crew radio |\n| `/customs` | [spz-tunners](#/spz-tunners) | Open customs |\n| `/discardclip` | [spz-core](#/spz-core) | Stop recording without saving |\n| `/duel` | [spz-races](#/spz-races) | `/duel <player> <track> <stake>` — challenge a player |\n| `/dv` | [spz-carspawner](#/spz-carspawner) | Delete your vehicle |\n| `/e` | [spz-emotes](#/spz-emotes) | `/e <name>` play an emote, `/e` stop |\n| `/editor` | [spz-core](#/spz-core) | Open the Rockstar Editor |\n| `/emotes` | [spz-emotes](#/spz-emotes) | Open the menu |\n| `/fix` | [spz-core](#/spz-core) | Repair the vehicle you are in |\n| `/help` | [spz-chat](#/spz-chat) | List every server feature and its key |\n| `/idlecam` | [spz-vehfunc](#/spz-vehfunc) | Toggle the idle camera |\n| `/joinrace` | [spz-races](#/spz-races) | Join the race queue (also `E` in freeroam) |\n| `/leaderboard` | [spz-leaderboard](#/spz-leaderboard) | Open the leaderboard |\n| `/leaverace` | [spz-races](#/spz-races) | Leave the queue / race |\n| `/menu` | [spz-core](#/spz-core) | Open the radial menu |\n| `/plate` | [spz-identity](#/spz-identity) | Set your personal plate |\n| `/pursuit` | [spz-pursuit](#/spz-pursuit) | Open the Hot Pursuit room menu |\n| `/quittt` | [spz-races](#/spz-races) | Quit the time trial |\n| `/raceboard` | [spz-spectate](#/spz-spectate) | Cycle the race board |\n| `/raceboard_hide` | [spz-spectate](#/spz-spectate) | Hide / restore the race board |\n| `/raceline` | [spz-raceline](#/spz-raceline) | Raceline options |\n| `/racelinepanel` | [spz-raceline](#/spz-raceline) | Open the raceline panel (`F3`) |\n| `/racelinetoggle` | [spz-raceline](#/spz-raceline) | Show / hide the line |\n| `/raceresults` | [spz-leaderboard](#/spz-leaderboard) | Open the latest race results |\n| `/rank` | [spz-progression](#/spz-progression) | Show your rank |\n| `/record` | [spz-core](#/spz-core) | Start recording a Rockstar Editor clip (again: stop and save) |\n| `/refreshdiscord` | [spz-identity](#/spz-identity) | Re-sync your Discord name/avatar (admins: for a player id) |\n| `/resetcustom` | [spz-vehicles](#/spz-vehicles) | Reset it |\n| `/resetoutfit` | [spz-appearance](#/spz-appearance) | Drop your saved outfit (falls back to crew/default) |\n| `/rival` | [spz-progression](#/spz-progression) | Show your rival and the gap on your last track |\n| `/save_customs` | [spz-tunners](#/spz-tunners) | Save the current setup |\n| `/savecustom` | [spz-vehicles](#/spz-vehicles) | Save the current car's customisation |\n| `/saveoutfit` | [spz-appearance](#/spz-appearance) | Save your current outfit |\n| `/spectate` | [spz-spectate](#/spz-spectate) | Toggle spectator mode |\n| `/srace` | [spz-races](#/spz-races) | Start a quick solo race |\n| `/stoprecord` | [spz-core](#/spz-core) | Stop and save the clip |\n| `/time` | [spz-core](#/spz-core) | Local time preview |\n| `/timetrail` | [spz-races](#/spz-races) | Start a time trial |\n| `/tune` | [spz-tunners](#/spz-tunners) | Open the tuner |\n| `/weather` | [spz-core](#/spz-core) | Local weather preview |\n\n## Admin\n\n| Command | Module | Description |\n|---|---|---|\n| `/admin` | [spz-admin](#/spz-admin) | Open the admin menu |\n| `/clearstart` | [spz-races](#/spz-races) | Remove a surveyed start line |\n| `/dc_leaderboard` | [spz-discord](#/spz-discord) | Post the leaderboard to Discord |\n| `/freezetime` | [spz-core](#/spz-core) | Freeze / unfreeze server time |\n| `/noclip` | [spz-admin](#/spz-admin) | Toggle noclip |\n| `/racehud` | [spz-races](#/spz-races) | Re-read race HUD convars |\n| `/reclassify` | [spz-vehicles](#/spz-vehicles) | Recompute car classes |\n| `/revive` | [spz-admin](#/spz-admin) | `/revive [id]` |\n| `/ride` | [spz-admin](#/spz-admin) | `/ride <id>` ride along |\n| `/setstart` | [spz-races](#/spz-races) | Survey a start line for a track |\n| `/spec` | [spz-admin](#/spz-admin) | `/spec <id>` spectate a player |\n| `/spz` | [spz-core](#/spz-core) | `/spz <sub>` — framework diagnostics and hot reload |\n| `/spzaddons` | [spz-vehicles](#/spz-vehicles) | List add-on cars |\n| `/spzaddonscan` | [spz-vehicles](#/spz-vehicles) | Scan for add-on cars |\n| `/spzbuckets` | [spz-core](#/spz-core) | List routing buckets and who is in them |\n| `/startlines` | [spz-races](#/spz-races) | List surveyed start lines |\n| `/synctime` | [spz-core](#/spz-core) | Set server time |\n| `/syncweather` | [spz-core](#/spz-core) | Set server weather |\n| `/tpm` | [spz-core](#/spz-core) | Teleport to your waypoint, or to a player id |\n| `/vehcheck` | [spz-vehicles](#/spz-vehicles) | Inspect the car you are in |\n\n## Dev\n\n| Command | Module | Description |\n|---|---|---|\n| `/carcode` | [spz-admin](#/spz-admin) | Copy your car's spawn code |\n| `/checkgateprops` | [spz-races](#/spz-races) | Check gate prop models resolve |\n| `/copdebug` | [spz-races](#/spz-races) | Cop-chase debug overlay |\n| `/cpdebug` | [spz-races](#/spz-races) | Draw checkpoint gates in 3D |\n| `/dmwhere` | [spz-demolition](#/spz-demolition) | Print arena position info |\n| `/fixheadings` | [spz-races](#/spz-races) | Recompute gate headings |\n| `/flagdrop` | [spz-races](#/spz-races) | Preview the flag girl animation |\n| `/ghostinfo` | [spz-raceline](#/spz-raceline) | Ghost replay diagnostics |\n| `/heading` | [spz-admin](#/spz-admin) | Copy your heading |\n| `/keydebug` | [spz-core](#/spz-core) | Show what GTA reports for a key binding |\n| `/mgkey` | [spz-minigames](#/spz-minigames) | Show the hub key binding |\n| `/phasing` | [spz-core](#/spz-core) | Print collision/phasing state |\n| `/racesoundtest` | [spz-races](#/spz-races) | Play the grid sounds |\n| `/rankuptest` | [spz-leaderboard](#/spz-leaderboard) | Preview the rank-up animation |\n| `/rlstatus` | [spz-raceline](#/spz-raceline) | Recording / storage status |\n| `/syncnametags` | [spz-nametag](#/spz-nametag) | Force a nametag resync |\n| `/vec3` | [spz-admin](#/spz-admin) | Copy your coords |\n| `/vec4` | [spz-admin](#/spz-admin) | Copy your coords + heading |\n| `/wantedtest` | [spz-races](#/spz-races) | Preview the wanted HUD |",
+   "source": null
+  },
+  "database": {
+   "title": "Database",
+   "tagline": "The tables spz-core creates and what they hold.",
+   "badges": [],
+   "body": "`spz-core` owns the schema. Every file in `spz-core/migrations/` runs once on first boot and\nis recorded in `spz_migrations`; restarts and upgrades are no-ops. To change the schema, add\na new numbered file — never edit one that has shipped.\n\n## Players and progression\n\n| Table | Holds |\n|---|---|\n| `players` | Profiles, stats, licence tier, plate, Discord link |\n| `driver_licenses` | Licence unlock history |\n| `player_outfits` | Saved appearance per player |\n| `player_badges` | Awards |\n| `rank_awards` | Rank point awards |\n| `player_rating_history` | iRating / SR history |\n| `economy_transactions` | Credits ledger |\n| `vehicle_customizations` | Saved car setups per player and model |\n\n## Crews and rivals\n\n| Table | Holds |\n|---|---|\n| `crews` | Crews, owner, settings, crew outfit |\n| `crew_invites` · `crew_rivals` | Invites and crew rivalries |\n| `rivals` · `rival_events` · `duels` | Player rivals and duels |\n\n## Racing\n\n| Table | Holds |\n|---|---|\n| `race_sessions` · `race_results` · `race_entries` | Races and per-player results |\n| `race_laps` · `race_incidents` | Laps and incidents |\n| `track_records` · `track_sectors` | Personal bests per track, class and sector |\n| `racelines` | Stored best-lap lines |\n| `race_replays` | Compressed replays |\n| `race_poll_runs` · `race_poll_options` | Vote history |\n| `speedcam_bests` | Speed camera records |\n\n## Analytics\n\n`player_sessions`, `player_activity`, `daily_player_stats`, `daily_credit_balances`,\n`vehicle_usage`, `feature_usage`, `race_queue_events`, `race_engine_events`,\n`connection_attempts`, `server_events`, `server_snapshots`, `admin_actions` — written by\n`spz-analytics` for Grafana.\n\n## Tracks are not in the database\n\nCustom tracks from Track Studio are saved to `spz-races/data/custom_tracks.json`; the shipped\ntracks live in `spz-races/data/tracks.lua`.",
+   "source": null
+  }
+ }
 }

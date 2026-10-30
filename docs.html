@@ -4,16 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Documentation — SPiceZ-Core</title>
-  <meta name="description" content="Complete documentation for every SPiceZ-Core module — installation, architecture, and per-script reference.">
+  <meta name="description" content="SPiceZ-Core public beta documentation: installation, architecture, gameplay and a reference for every module.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=2">
+  <link rel="stylesheet" href="css/style.css?v=3">
+  <link rel="stylesheet" href="css/docs.css?v=3">
 </head>
 <body>
 
   <nav class="nav">
-    <a class="nav-logo" href="index.html"><img src="Assets/Logo/logo.png" alt="SPiceZ-Core logo" style="height:26px"></a>
+    <a class="nav-logo" href="index.html"><img src="Assets/Logo/logo.png" alt="SPiceZ-Core logo" style="height:26px"><span class="nav-beta">Beta</span></a>
     <div class="nav-links">
       <a href="index.html#features">Features</a>
       <a href="index.html#mission">Mission</a>
@@ -26,13 +27,20 @@
   </nav>
 
   <div class="docs-layout">
-    <aside class="docs-sidebar" id="sidebar"></aside>
+    <aside class="docs-sidebar" id="sidebar">
+      <label class="docs-search">
+        <input id="docsSearch" type="search" placeholder="Search docs" autocomplete="off" spellcheck="false">
+        <kbd>/</kbd>
+      </label>
+      <nav id="docsNav"></nav>
+    </aside>
     <main class="docs-content" id="content"></main>
+    <aside class="docs-toc" id="toc"></aside>
   </div>
 
   <button class="docs-menu-btn" id="menuBtn">Menu</button>
 
-  <script src="js/docs-data.js?v=2"></script>
-  <script src="js/docs.js?v=2"></script>
+  <script src="js/docs-data.js?v=3"></script>
+  <script src="js/docs.js?v=3"></script>
 </body>
 </html>
