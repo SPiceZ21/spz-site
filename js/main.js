@@ -82,6 +82,7 @@ if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
   const footer = document.querySelector('.site-footer')
   const glow = footer && footer.querySelector('.sf-glow')
   const bars = glow && glow.querySelector('#sfBars')
+  const cars = footer && footer.querySelector('.sf-cars')
   if (!glow || !bars) return
 
   const VBW = 1271, VBH = 599, N = 9, PEAK = 0.98, VALLEY = 0.55, MIN = 0
@@ -102,6 +103,17 @@ if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
     // A blurred shape scaled to 0 can still leave a hairline; hide it outright
     // until the end of the page is actually in reach.
     glow.style.visibility = t > 0.001 ? 'visible' : 'hidden'
+    // Cars drive up out of the glow, each starting a little later (data-lead).
+    if (cars) {
+      cars.style.visibility = glow.style.visibility
+      cars.querySelectorAll('img').forEach((img) => {
+        const lead = +img.dataset.lead || 0
+        const k = Math.max(0, Math.min(1, (t - lead) / (1 - lead)))
+        const ease = 1 - Math.pow(1 - k, 3)
+        // from fully below the screen to resting with their tails in the glow
+        img.style.transform = `translateY(${(1 - ease) * 120 - ease * 30}%)`
+      })
+    }
   }
   measure()
   addEventListener('scroll', measure, { passive: true })
