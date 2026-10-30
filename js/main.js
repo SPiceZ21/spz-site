@@ -110,8 +110,11 @@ if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
         const lead = +img.dataset.lead || 0
         const k = Math.max(0, Math.min(1, (t - lead) / (1 - lead)))
         const ease = 1 - Math.pow(1 - k, 3)
-        // from fully below the screen to resting with their tails in the glow
-        img.style.transform = `translateY(${(1 - ease) * 120 - ease * 30}%)`
+        // Rise from fully below the screen to HALF out (50% still below the edge),
+        // fanned on an arc: outer cars tilt outward and sit a little lower.
+        const rot = (+img.dataset.rot || 0) * ease
+        const drop = +img.dataset.drop || 0
+        img.style.transform = `translateY(${(1 - ease) * 110 + ease * (50 + drop)}%) rotate(${rot}deg)`
       })
     }
   }
