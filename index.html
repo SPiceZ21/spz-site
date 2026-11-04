@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css?v=4">
-  <link rel="stylesheet" href="css/home.css?v=11">
+  <link rel="stylesheet" href="css/home.css?v=12">
 </head>
 <body class="home">
 
@@ -110,10 +110,37 @@
       </div>
       <div class="feature reveal">
         <div class="feature-icon"><i data-lucide="monitor"></i></div>
-        <h3>Purpose-built UI</h3>
-        <p>Race overlay with 3D checkpoint markers and sector strip, minimal nameplates, compact speed-cam HUD, cinematic spawn — all Preact + Vite, all consistent.</p>
+        <h3>One interface, placed by you</h3>
+        <p>spz-hud draws every screen on one layer: one look, one owner of the mouse, no overlaps. Players move and resize the HUD with /hudedit, and the key strip always shows their own bindings.</p>
       </div>
     </div>
+  </section>
+
+  <!-- ── The HUD, in every state ─────────────────────────────── -->
+  <section class="section" id="hud">
+    <p class="section-eyebrow reveal">ONE INTERFACE</p>
+    <h2 class="reveal">The HUD, in every state</h2>
+    <p class="hud-lede reveal">One layer draws every screen: freeroam, racing, minigames, spectating and every menu.
+      Players place it themselves and pick an analogue or digital speedometer.</p>
+    <div class="hud-show reveal">
+      <div class="hud-tabs" role="tablist">
+        <button class="hud-tab on" data-img="Assets/docs/hud-freeroam.jpg" data-cap="Profile card, nametags, speedometer and the key strip for what you can press right now.">Freeroam</button>
+        <button class="hud-tab" data-img="Assets/docs/hud-warmup.jpg" data-cap="Warmup timer and the race keys, before the grid lines up.">Warmup</button>
+        <button class="hud-tab" data-img="Assets/docs/race-hud.jpg" data-cap="Standings, sectors, lap and total time, proximity radar and checkpoint progress.">Race</button>
+        <button class="hud-tab" data-img="Assets/docs/hud-lastlap.jpg" data-cap="All three sectors in, the finish countdown running and the session’s fastest lap.">Last lap</button>
+        <button class="hud-tab" data-img="Assets/docs/raceui-results.jpg" data-cap="Place, finish time, best lap and what the race did to your rating, on one strip.">Results</button>
+        <button class="hud-tab" data-img="Assets/docs/hud-timetrial.jpg" data-cap="The clock against your best, with restart on the key strip.">Time trial</button>
+        <button class="hud-tab" data-img="Assets/docs/hud-minigame.jpg" data-cap="Each minigame’s own status, standings and keys, top-left.">Minigame</button>
+        <button class="hud-tab" data-img="Assets/docs/spectate.jpg" data-cap="The driver you follow and the live race board.">Spectate</button>
+        <button class="hud-tab" data-img="Assets/docs/hud-edit.jpg" data-cap="Every element movable, resizable and hideable. Saved per player.">/hudedit</button>
+        <button class="hud-tab" data-img="Assets/docs/spawn-showcase.jpg" data-cap="Welcome, then pick where to spawn.">Spawn</button>
+      </div>
+      <figure class="hud-frame">
+        <img id="hud-img" src="Assets/docs/hud-freeroam.jpg" alt="SPiceZ-Core HUD: Freeroam" loading="lazy" />
+        <figcaption id="hud-cap">Profile card, nametags, speedometer and the key strip for what you can press right now.</figcaption>
+      </figure>
+    </div>
+    <a class="hud-more reveal" href="docs.html#/ui-gallery">See every screen in the UI gallery &rarr;</a>
   </section>
 
   <!-- ── Mission / Vision ─────────────────────────────────── -->
@@ -276,6 +303,6 @@
   <script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-  <script src="js/main.js?v=8"></script>
+  <script src="js/main.js?v=9"></script>
 </body>
 </html>

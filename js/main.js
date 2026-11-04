@@ -122,3 +122,23 @@ if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
   addEventListener('scroll', measure, { passive: true })
   addEventListener('resize', measure, { passive: true })
 })()
+
+// ── The HUD, in every state: tabs swap the screenshot ─────────
+{
+  const img = document.getElementById('hud-img')
+  const cap = document.getElementById('hud-cap')
+  const tabs = document.querySelectorAll('.hud-tab')
+  // Warm the cache so switching tabs is instant.
+  tabs.forEach((t) => { const i = new Image(); i.src = t.dataset.img })
+  tabs.forEach((t) => t.addEventListener('click', () => {
+    if (t.classList.contains('on') || !img) return
+    tabs.forEach((x) => x.classList.toggle('on', x === t))
+    img.classList.add('swap')
+    setTimeout(() => {
+      img.src = t.dataset.img
+      img.alt = 'SPiceZ-Core HUD: ' + t.textContent
+      cap.textContent = t.dataset.cap
+      img.classList.remove('swap')
+    }, 160)
+  }))
+}
