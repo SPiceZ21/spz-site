@@ -18,13 +18,13 @@ const GROUPS = [
   ['Get Started', ['overview', 'beta', 'installation', 'first-time-setup', 'architecture']],
   ['Gameplay', ['race-flow', 'progression']],
   ['Modules', ['modules']],
-  ['Core', ['spz-core', 'spz-identity', 'spz-spawn', 'spz-appearance', 'spz-loading']],
+  ['Core', ['spz-core', 'spz-identity', 'spz-spawn', 'spz-appearance', 'spz-analytics', 'spz-loading']],
   ['Interface', ['spz-hud', 'spz-speedometer', 'spz-pausemenu', 'spz-nametag', 'spz-chat', 'spz-emotes']],
   ['Racing', ['spz-races', 'spz-progression', 'spz-spectate', 'spz-replay', 'spz-speedcam', 'spz-raceline']],
   ['Vehicles', ['spz-vehicles']],
   ['Social', ['spz-crew', 'spz-discord']],
   ['Minigames', ['spz-minigames', 'spz-colorrush', 'spz-cyclone', 'spz-bomb', 'spz-demolition', 'spz-pursuit']],
-  ['Platform', ['spz-admin', 'spz-analytics', 'spz-fpscap', 'spz-txrecipe']],
+  ['Platform', ['spz-admin', 'spz-fpscap', 'spz-txrecipe']],
   ['Reference', ['keybinds', 'commands', 'database', 'ui-gallery']],
 ]
 
@@ -40,7 +40,7 @@ const fileOf = id => FILES[id] || `modules/${id}.md`
 
 // Pages whose markdown has no tagline / badges keep these.
 // Pages for parts merged into another resource: their source is that resource.
-const PART_OF = { 'spz-progression': 'spz-races', 'spz-spectate': 'spz-races', 'spz-replay': 'spz-races', 'spz-speedcam': 'spz-races', 'spz-speedometer': 'spz-hud', 'spz-pausemenu': 'spz-hud', 'spz-nametag': 'spz-hud', 'spz-chat': 'spz-hud', 'spz-emotes': 'spz-hud' }
+const PART_OF = { 'spz-progression': 'spz-races', 'spz-spectate': 'spz-races', 'spz-replay': 'spz-races', 'spz-speedcam': 'spz-races', 'spz-speedometer': 'spz-hud', 'spz-pausemenu': 'spz-hud', 'spz-nametag': 'spz-hud', 'spz-chat': 'spz-hud', 'spz-emotes': 'spz-hud', 'spz-identity': 'spz-core', 'spz-spawn': 'spz-core', 'spz-appearance': 'spz-core', 'spz-analytics': 'spz-core' }
 
 const META = {
   overview: { tagline: 'An open-source, racing-only framework for FiveM.', badges: ['Public beta', 'Lua 5.4', 'FiveM'] },
