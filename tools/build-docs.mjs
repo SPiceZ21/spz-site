@@ -20,7 +20,7 @@ const GROUPS = [
   ['Modules', ['modules']],
   ['Core', ['spz-core', 'spz-identity', 'spz-spawn', 'spz-appearance', 'spz-loading']],
   ['Interface', ['spz-hud', 'spz-pausemenu', 'spz-nametag', 'spz-chat', 'spz-emotes']],
-  ['Racing', ['spz-races', 'spz-poll', 'spz-raceUI', 'spz-leaderboard', 'spz-progression', 'spz-raceline', 'spz-speedcam', 'spz-spectate', 'spz-replay']],
+  ['Racing', ['spz-races', 'spz-progression', 'spz-raceline', 'spz-speedcam', 'spz-spectate', 'spz-replay']],
   ['Vehicles', ['spz-vehicles', 'spz-carspawner', 'spz-tunners', 'spz-vehfunc', 'spz-speedometer']],
   ['Social', ['spz-crew', 'spz-discord']],
   ['Minigames', ['spz-minigames', 'spz-colorrush', 'spz-cyclone', 'spz-bomb', 'spz-demolition', 'spz-pursuit']],
