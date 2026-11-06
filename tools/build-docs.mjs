@@ -21,7 +21,7 @@ const GROUPS = [
   ['Core', ['spz-core', 'spz-identity', 'spz-spawn', 'spz-appearance', 'spz-loading']],
   ['Interface', ['spz-hud', 'spz-pausemenu', 'spz-nametag', 'spz-chat', 'spz-emotes']],
   ['Racing', ['spz-races', 'spz-progression', 'spz-raceline', 'spz-speedcam', 'spz-spectate', 'spz-replay']],
-  ['Vehicles', ['spz-vehicles', 'spz-carspawner', 'spz-tunners', 'spz-vehfunc', 'spz-speedometer']],
+  ['Vehicles', ['spz-vehicles', 'spz-speedometer']],
   ['Social', ['spz-crew', 'spz-discord']],
   ['Minigames', ['spz-minigames', 'spz-colorrush', 'spz-cyclone', 'spz-bomb', 'spz-demolition', 'spz-pursuit']],
   ['Platform', ['spz-admin', 'spz-analytics', 'spz-fpscap', 'spz-txrecipe']],
