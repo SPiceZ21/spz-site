@@ -40,7 +40,7 @@ const fileOf = id => FILES[id] || `modules/${id}.md`
 
 // Pages whose markdown has no tagline / badges keep these.
 // Pages for parts merged into another resource: their source is that resource.
-const PART_OF = { 'spz-progression': 'spz-races', 'spz-spectate': 'spz-races', 'spz-replay': 'spz-races', 'spz-speedcam': 'spz-races', 'spz-speedometer': 'spz-hud', 'spz-pausemenu': 'spz-hud' }
+const PART_OF = { 'spz-progression': 'spz-races', 'spz-spectate': 'spz-races', 'spz-replay': 'spz-races', 'spz-speedcam': 'spz-races', 'spz-speedometer': 'spz-hud', 'spz-pausemenu': 'spz-hud', 'spz-nametag': 'spz-hud', 'spz-chat': 'spz-hud', 'spz-emotes': 'spz-hud' }
 
 const META = {
   overview: { tagline: 'An open-source, racing-only framework for FiveM.', badges: ['Public beta', 'Lua 5.4', 'FiveM'] },
