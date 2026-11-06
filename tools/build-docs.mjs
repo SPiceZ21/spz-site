@@ -20,7 +20,7 @@ const GROUPS = [
   ['Modules', ['modules']],
   ['Core', ['spz-core', 'spz-identity', 'spz-spawn', 'spz-appearance', 'spz-loading']],
   ['Interface', ['spz-hud', 'spz-pausemenu', 'spz-nametag', 'spz-chat', 'spz-emotes']],
-  ['Racing', ['spz-races', 'spz-progression', 'spz-raceline', 'spz-speedcam', 'spz-spectate', 'spz-replay']],
+  ['Racing', ['spz-races', 'spz-progression', 'spz-spectate', 'spz-replay', 'spz-speedcam', 'spz-raceline']],
   ['Vehicles', ['spz-vehicles', 'spz-speedometer']],
   ['Social', ['spz-crew', 'spz-discord']],
   ['Minigames', ['spz-minigames', 'spz-colorrush', 'spz-cyclone', 'spz-bomb', 'spz-demolition', 'spz-pursuit']],
@@ -39,6 +39,9 @@ const FILES = {
 const fileOf = id => FILES[id] || `modules/${id}.md`
 
 // Pages whose markdown has no tagline / badges keep these.
+// Pages for parts merged into another resource: their source is that resource.
+const PART_OF = { 'spz-progression': 'spz-races', 'spz-spectate': 'spz-races', 'spz-replay': 'spz-races', 'spz-speedcam': 'spz-races' }
+
 const META = {
   overview: { tagline: 'An open-source, racing-only framework for FiveM.', badges: ['Public beta', 'Lua 5.4', 'FiveM'] },
   beta: { tagline: 'What is in the public beta, what to expect, and how to report issues.' },
@@ -102,7 +105,7 @@ for (const [, ids] of GROUPS) for (const id of ids) {
     tagline: p.tagline ?? meta.tagline ?? null,
     badges: p.badges.length ? p.badges : (meta.badges || []),
     body: p.body,
-    source: id.startsWith('spz-') ? `https://github.com/SPiceZ21/${id}` : null,
+    source: id.startsWith('spz-') ? `https://github.com/SPiceZ21/${PART_OF[id] || id}` : null,
   }
 }
 
